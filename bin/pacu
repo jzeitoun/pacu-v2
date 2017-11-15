@@ -1,0 +1,21 @@
+#!/bin/bash
+if [ $# -ne 2 ]; then
+    echo $0
+    echo
+    echo "    [Usage]"
+    echo "    pacu USER PORT"
+    echo
+    echo "    [Example]"
+    echo "    pacu ht 20000"
+    echo
+    echo "    run pacu on 20000 port with ht's profile."
+    echo "    Profile name should be all lowercase."
+    echo
+    echo "    [Profiles]"
+    echo "    carey, dario, kirstie, jack, xiao"
+    echo
+    echo "    Contact: Hyungtae Kim <hyungtk@uci.edu> <dev@kim.ht>"
+    exit 1
+fi
+
+python -m pacu.api --db=glab --opt=$1 serve --web.port=$2 --web.debug=false

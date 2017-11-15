@@ -1,0 +1,2 @@
+class TwowayBase(object):
+    pass

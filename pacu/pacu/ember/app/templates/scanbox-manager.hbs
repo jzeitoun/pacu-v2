@@ -1,0 +1,81 @@
+<p>Raw Data Importer</p>
+{{sbxm-nav-datastore
+  src=model.path.datastore_nav
+  root=model.path.datastore.root
+  ios=model.ios
+  conditions=model.conditions
+  days=dsDays glob=dsGlob hops=dsHops
+}}
+
+<div class="ui clearing divider"></div>
+
+<p>Workspace Launcher</p>
+<div class="fluid ui labeled input">
+  <div class="ui label">Filter</div>
+  {{input type="text" placeholder="You can filter by IO name...and bookmark to keep your filter!" value=filter}}
+</div>
+<div class="ui inverted segment">
+  <div class="ui stackable three column page grid">
+  {{#each filteredIOs as |io|}}
+    <div class="column">
+      {{#anlz-session-card
+        title=io.info.iopath
+        dot=io.info.scanmodestr
+        timeAgo=(from-timestamp io.info.sbxtime detailed=false)
+        src=io.info.sbxsize
+        user=io.info.nframesstr
+        host=io.info.frameratestr
+      }}
+      <div class="extra content">
+        <div class="ui list">
+          {{#if io.has_condition}}
+            <div class="item"><span class="tiny ui green label">Has condition</span></div>
+          {{/if}}
+          {{#if io.info.focal_pane_args}}
+            <div class="item"><span class="tiny ui blue label">Focal Panes: {{io.info.focal_pane_args.n}}</span></div>
+          {{/if}}
+        </div>
+      </div>
+      {{#if io.dbfixed}}
+        <h5 class="ui centered header">new db schema!</h5>
+      {{/if}}
+      {{#if io.err}}
+      <div class="extra content">
+        <p class="ui red mini header">{{io.err.type}}</p>
+        <p style="height: 64px; overflow-y: scroll">{{io.err.detail}}</p>
+        <div class="ui vertical fluid buttons">
+          <div class="ui red basic button" {{action "removeImported" io}}>Remove Imported</div>
+        </div>
+      </div>
+      {{else}}
+      <div class="extra content">
+        <div class="ui vertical fluid buttons">
+          <div class="ui blue basic button" {{action "newWorkspace" io}}>New Workspace</div>
+          <div class="ui red basic button" {{action "removeImported" io}}>Remove Imported</div>
+        </div>
+      </div>
+      <div class="extra content">
+        {{#each io.workspaces as |ws index|}}
+        <h5 class="ui header">
+          <i class="radio icon"></i>
+          <div class="content">
+            <a class="trj-analyses-open-session"
+              {{action "openWorkspace" io ws}}>
+                {{index}}: {{ws}}</a>
+            <div class="ui inline simple dropdown">
+              <i class="dropdown icon"></i>
+              <div class="menu" style="margin: -1em;">
+                <div class="item" {{action "openWorkspace" io ws}}>Open</div>
+                <div class="item" {{action "removeWorkspace" io ws}}>Delete</div>
+              </div>
+            </div>
+          </div>
+        </h5>
+        {{/each}}
+      </div>
+      {{/if}}
+      {{/anlz-session-card}}
+    </div>
+  {{/each}}
+  </div>
+</div>

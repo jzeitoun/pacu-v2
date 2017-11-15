@@ -1,0 +1,98 @@
+<marker id="base-marker" markerUnits="userSpaceOnUse" markerHeight="10" markerWidth="10"
+  refX="5" refY="5">
+  <circle cx="5" cy="5" r="1.2"/>
+</marker>
+
+{{#if placeMode}}
+  {{x-layer/roi-manager-v2/prototype points=roiPrototype.points}}
+{{/if}}
+
+{{#if selectMode}}
+  {{x-layer/roi-manager-v2/select-rect
+    x=selectRect.x
+    y=selectRect.y
+    width=selectRect.width
+    height=selectRect.height}}
+{{/if}}
+
+{{#each rois as |roi|}}
+  {{x-layer/roi-manager-v2/polygon
+    roi_id=roi.roi_id
+    points=roi.polygon
+    lastComputedPoints=roi.lastComputedPolygon
+    selected=roi.selected
+    dragging=roi.dragging
+    pointdrag=roi.pointdrag
+    targetPoint=roi.targetPoint
+    placeMode=placeMode
+    disableHandles=disableHandles
+    triggerUpdate=(action "triggerUpdate" roi.roi_id)
+    hover=roi.hover}}
+  {{x-layer/roi-manager-v2/polygon-id
+    roi_id=roi.roi_id
+    points=roi.polygon
+    selected=roi.selected
+    hover=roi.hover}}
+{{/each}}
+
+<style>
+
+marker#base-marker {
+  fill: #FFFFFF;
+  fill-opacity: 0.8;
+}
+
+rect {
+  fill: #115194;
+  fill-opacity: 0.2;
+  stroke: #FFFFFF;
+  stroke-width: 1;
+  stroke-opacity: 0.8;
+}
+
+polygon {
+  /* fill: #8DF927; /* lime */
+  fill: #880595; /* purple */
+  fill-opacity: 0.65;
+  stroke: #FFFFFF;
+  stroke-width: 0.8;
+  stroke-opacity: 0;
+}
+
+polygon.in-progress {
+  fill: #FD9612;
+}
+
+polygon.computed {
+  fill: #8DF927; /* lime */
+}
+
+polygon:hover {
+  stroke-opacity: 0.8;
+  marker-start: url(#base-marker);
+  marker-mid: url(#base-marker);
+}
+
+polygon.prototype, .pointdrag {
+  stroke-opacity: 0.8;
+  marker-start: url(#base-marker);
+  marker-mid: url(#base-marker);
+}
+
+.selected, .dragging {
+  fill: #F02C15;
+  fill-opacity: 0.6;
+  stroke-opacity: 0.8;
+}
+
+.visible-id {
+  visibility: visible;
+  position: relative;
+}
+
+.hidden-id {
+  visibility: hidden;
+  position: relative;
+}
+
+</style>

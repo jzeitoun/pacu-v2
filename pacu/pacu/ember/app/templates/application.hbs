@@ -1,0 +1,35 @@
+<section>
+  {{#link-to 'index'}}
+    <h3 class="ui left floated inverted header app-info">
+      PACU
+    </h3>
+  {{/link-to}}
+  {{#ui-popup content="Toggle Fullscreen" tagName="span"}}
+    <div class="nav circular ui small icon button" {{action "toggleFullscreen"}}>
+      <i class="{{if fullscreen.isEnabled "minimize" "maximize"}} icon"></i>
+    </div>
+  {{/ui-popup}}
+  {{#each model.routes as |route|}}
+    {{#ui-popup content=route.content tagName="span"}}
+      {{#link-to route.linkTo class="nav circular ui small icon blue button"}}
+        <i class="{{route.icon}} retro {{route.color}} icon"></i>
+      {{/link-to}}
+    {{/ui-popup}}
+  {{/each}}
+  <h6 class="ui right floated inverted tiny header teal app-info">
+    {{currentPath}}
+  </h6>
+</section>
+
+<section class="ui clearing divider"></section> {{! clearing is useful. }}
+<section>
+  {{outlet}}
+</section>
+
+<section class="ui divider"></section>
+<section id="copyright">
+  <p>&copy;2015, 2016 Gandhi Lab</p>
+  <p>The Department of Neurobiology and Behavior</p>
+  <p>University of California, Irvine</p>
+  <p><a href="mailto:hyungtk@uci.edu"><i class="mail outline icon"></i></a></p>
+</section>

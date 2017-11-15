@@ -1,0 +1,8 @@
+{
+  "name": "pacu-v2",
+  "dependencies": {
+    "semantic-ui": "^2.2.13",
+    "sweetalert2": "^6.1.0",
+    "chartist": "^0.11.0"
+  }
+}

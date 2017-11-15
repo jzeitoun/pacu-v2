@@ -1,0 +1,6 @@
+{{#each messages as |msg|}}
+  {{#if msg.count}}
+    <span class="ui mini red circular label" style="float: left">Repeating {{msg.count}}</span>
+  {{/if}}
+  <pre class="message-body">{{msg.body}}</pre>
+{{/each}}

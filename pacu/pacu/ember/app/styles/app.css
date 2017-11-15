@@ -1,0 +1,184 @@
+@import url("range.css");
+/*@import "pod-styles";
+@import "grab";*/
+
+body {
+  color: ivory;
+  background-color: black;
+  padding: 2vh 2vw;
+}
+
+.header.app-info {
+  line-height: 2em;
+  font-family: sans-serif;
+}
+
+a.active > div.nav {
+  background-color: maroon !important;
+}
+
+#copyright {
+  text-align: center;
+  font-size: 0.8em;
+  font-style: italic;
+}
+
+p {
+  margin: 0.5em;
+  letter-spacing: 0.1em;
+}
+
+svg#roi-manager {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  position: absolute;
+
+}
+
+.place-mode {
+  cursor: none;
+}
+
+canvas#stream {
+  position: absolute;
+}
+
+.sci-analyses input {
+  color: black;
+}
+.sci-analyses-open-session:hover {
+  color: red;
+}
+.trj-analyses input {
+  color: black;
+}
+.trjci-analyses-open-session:hover {
+  color: red;
+}
+
+#route-sbx-analysis {
+  .roi-list-container {
+    font-size: 1.5vw;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-left: 0px;
+  }
+  .imagestack-container {
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+}
+
+/*.sbx
+  .ui.sticky
+    transition -webkit-filter 1s linear
+    &.top.fixed
+      -webkit-filter: brightness(2);
+
+.ui.inherit-font-size
+  font-size inherit
+
+input.visual.option
+  background-color #131518
+.roi-rect
+  fill transparent
+  stroke-width 1
+  stroke lime
+  cursor pointer
+  &.active
+    stroke-width 2
+    stroke yellow
+  &:active
+    fill RGBA(50, 50, 255, 0.5);
+.roi-rect-temp
+  stroke red
+  cursor crosshair
+*/
+
+.ui.segment.input-checkbox-override {
+  margin: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 0;
+  padding: 6px 12px 3px 12px;
+}
+
+.grid .tick {
+  stroke: lightgrey;
+  opacity: 0.7;
+  shape-rendering: crispEdges;
+}
+
+.grid path {
+  stroke-width: 0;
+}
+
+.axis path {
+  fill: none;
+  stroke: #bbb;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  fill: #555;
+}
+
+.axis line {	
+  stroke: #e7e7e7;
+  shape-rendering: crispEdges;
+}
+
+.axis .axis-label {
+  font-size: 14px;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1.5px;
+}
+
+/*.dot {
+  stroke: transparent;
+  stroke-width: 10px;  
+  cursor: pointer;
+}
+
+// #trajectory
+//   border 1px solid white
+
+.dot:hover {
+	stroke: rgba(68, 127, 255, 0.3);
+}
+
+.noselect {
+  -webkit-touch-callout: none;
+    -webkit-user-select: none;
+     -khtml-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+}
+
+svg {
+  font: 9px sans-serif;
+}
+
+.line {
+  fill: none;
+  clip-path: url(#clip);
+  stroke: #f00;
+  stroke-width: 1px !important;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: rgba(255,255,255,0.3);
+  stroke-width: 0.5px !important;
+  shape-rendering: crispEdges;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}*/

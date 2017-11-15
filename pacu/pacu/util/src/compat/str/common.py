@@ -1,0 +1,2 @@
+class cstr(object):
+    pass

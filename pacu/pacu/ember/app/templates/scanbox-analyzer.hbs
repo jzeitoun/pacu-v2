@@ -1,0 +1,335 @@
+{{#sui-sticky class="sbx"}}
+<div class="ui small compact inverted icon top menu">
+  <a class="item" {{action "exportROIs"}}>
+    <i class="yellow cloud download icon"></i>
+  </a>
+  <input type="file" id="roi-import-file-all" style="display: none"/>
+  <a class="item" {{action "importROIsAll"}}>
+    <i class="icons" data-tooltip="Import Everything">
+      <i class="yellow cloud upload icon"></i>
+      <i class="red corner star icon"></i>
+    </i>
+  </a>
+  <input type="file" id="roi-import-file-diff" style="display: none"/>
+  <a class="item" {{action "importROIsDiff"}}>
+    <i class="icons" data-tooltip="Import Newly Labeled ROI Only">
+      <i class="yellow cloud upload icon"></i>
+      <i class="green corner add icon"></i>
+    </i>
+  </a>
+  <a class="item" {{action "reloadTracePlot"}}>
+    <i class="red line chart icon"></i>
+  </a>
+  {{#unless (eq model.condition.stimulus 'SparseNoiseStimulus')}}
+  <a class="item">
+    SF: {{dropdown-value
+      items=model.condition.sfrequencies
+      value=model.workspace.cur_sfreq}}
+  </a>
+  {{/unless}}
+  {{#if model.condition.contrasts}}
+  <a class="item">
+    Contrast: {{dropdown-value
+      items=model.condition.contrasts
+      value=model.workspace.cur_contrast}}
+  </a>
+  {{else}}
+    <a class="item" {{action "noop"}}>
+      Contrast: {{model.condition.contrast}}
+    </a>
+  {{/if}}
+  {{#if model.condition.tfrequencies}}
+  <a class="item">
+    TF: {{dropdown-value
+      items=model.condition.tfrequencies
+      value=model.workspace.cur_tfreq}}
+  </a>
+  {{/if}}
+  {{!--
+  <a class="item" {{action "noop"}}>
+    Baseline Duration: {{model.workspace.baseline_duration}}
+  </a>
+  --}}
+
+  <div class="ui simple dropdown {{if maxpBusy "disabled"}} item">
+    Max Projection Image {{if stream.ch0HasMaxp "✓" "✗"}}
+    <i class="dropdown icon"></i>
+    <div class="menu">
+      <div class="item" {{action "initMPI"}}>Initialize</div>
+      <div class="item">Live-Test</div>
+      {{#if stream.ch0HasMaxp}}
+        <div class="item" {{action "overlayMPI"}}>Overlay MPI Window</div>
+        <div class="item" {{action "exportMPI"}}>Export MPI as Tiff</div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{#unless (eq model.condition.stimulus 'SparseNoiseStimulus')}}
+    {{!--
+  <div class="ui simple dropdown item">
+    Global SoG Initial Guess
+    <i class="dropdown icon"></i>
+    <div class="menu">
+      {{#with model.workspace.sog_initial_guess as |p|}}
+      <div class="header">A1: {{p.a1min}} ~ {{p.a1max}}</div>
+      <div class="header">A2: {{p.a2min}} ~ {{p.a2max}}</div>
+      <div class="header">Sigma: {{p.sigmin}} ~ {{p.sigmax}}</div>
+      <div class="header">Offset: {{p.offmin}} ~ {{p.offmax}}</div>
+      {!--
+      <div class="divider"></div>
+      <div class="item" {{action "overlayMPI"}}>Change...</div>
+      --}
+      {{/with}}
+    </div>
+  </div>
+  --}}
+
+  <div class="ui simple dropdown item">
+    Export
+    <i class="dropdown icon"></i>
+    <div class="menu">
+      <div class="item" {{action "exportSFreqFitDataAsMat" model.workspace.activeROI}}>
+        SFreq Fit Data as .mat</div>
+      <div class="item" {{action "exportROITracesAsMat"}}>
+        ROI Traces as .mat</div>
+      {{! Added by (JZ)}}
+      <div class="item" {{action "exportDataAsMat"}}>
+        All Data as .mat</div>
+      <div class="item" {{action "testalert"}}>Modified Twice Alert!</div>
+    </div>
+  </div>
+  {{/unless}}
+
+  <div class="ui simple dropdown item">
+    Batch Process
+    <i class="dropdown icon"></i>
+    <div class="menu">
+      <div class="item" {{action "computeAll"}}>Compute all</div>
+      <div class="item" {{action "neuropilRValueAll"}}>Neuropil R Value all</div>
+      <div class="item" {{action "neuropilOnAll"}}>Neuropil On all</div>
+      <div class="item" {{action "neuropilOffAll"}}>Neuropil Off all</div>
+    </div>
+  </div>
+
+  <div class="ui simple dropdown item">
+    Params
+    <i class="dropdown icon"></i>
+    <div class="menu">
+      <div class="item" {{action "updateFrameShift"}}>
+        Update Frame Shift: {{model.workspace.params.frame_shift}}</div>
+    </div>
+  </div>
+</div>
+{{/sui-sticky}}
+
+<div id="route-sbx-analysis" class="ui inverted segment">
+  {{! MultiTrace Plot }}
+  {{#with (hash width=0) as |masterDimension|}}
+    {{sbx-analysis/plot/multi-trace
+      dimension=masterDimension
+      index=model.stream.img.curIndex
+      datatags=model.workspace.activeROI.dtoverallmeanTrace}}
+    {{!--{{#unless (eq model.condition.stimulus 'SparseNoiseStimulus')}--}}
+        {{sbx-analysis/plot/orientations
+          dimension=masterDimension
+          condition=model.condition
+          roiID=model.workspace.activeROI.id
+          datatag=model.workspace.activeROI.dtorientationsmeanBySF}}
+        {{sbx-analysis/plot/sumofgaussians
+          dimension=masterDimension
+          condition=model.condition
+          roiID=model.workspace.activeROI.id
+          datatag=model.workspace.activeROI.dtorientationsfitBySF}}
+        {{!--{{/unless}}--}}
+  {{/with}}
+
+  {{! Main Canvas Slider }}
+  <section class="ui clearing divider"></section>
+  <div class="ui">
+    {{input type="range" min="0" step="1"
+      max=stream.img.maxIndex value=stream.img.curIndex}}
+  </div>
+
+  <section class="ui clearing divider"></section>
+  <div class="flex-container"> {{!-- Start flex div --}}
+    {{! Aadded by RA }}
+    <div class="ui compact inverted icon menu">
+      {{! Dropdown to select ROI visualization mode. If true uses min mode. Right now this is handled as a bool.}}
+      <div class="ui simple dropdown item">
+        Display:{{#if MinModeROIs}}Minimal{{else}}Full Featured{{/if}}
+        <i class="dropdown icon"></i>
+        <div class="menu">
+          <div class="item" {{action "changeModeROIs" true}}>Minimal</div>
+          <div class="item" {{action "changeModeROIs" false}}>Full Featured</div>
+        </div>
+      </div>
+
+      {{! toggle to show, hide ROIs. }}
+      <div class="left-label">Display ROIs:</div>
+      <div class="ui toggle checkbox roi-toggle">
+        <input type="checkbox" id="checkbox-toggle" name="cancelCheckbox" checked {{action "changeVisibilityROIs" on="change"}}/>
+      <label></label>
+      </div>
+
+    {{! End }}
+    </div>
+
+    {{! Added by (JZ)}}
+    <div class="ui simple dropdown colormap{{if maxpBusy "disabled"}} item">
+      Colormap
+      <i class="dropdown icon"></i>
+      <div class="menu">
+        <div class="item" {{action "setCmap" 'Jet'}}>Jet</div>
+        <div class="item" {{action "setCmap" 'Gray'}}>Gray</div>
+        <div class="item" {{action "setCmap" 'Viridis'}}>Viridis</div>
+        <div class="item" {{action "setCmap" 'Plasma'}}>Plasma</div>
+        <div class="item" {{action "setCmap" 'Inferno'}}>Inferno</div>
+        <div class="item" {{action "setCmap" 'Magma'}}>Magma</div>
+        <div class="item" {{action "setCmap" 'Bone'}}>Bone</div>
+        <div class="item" {{action "setCmap" 'Pink'}}>Pink</div>
+        <div class="item" {{action "setCmap" 'Spring'}}>Spring</div>
+        <div class="item" {{action "setCmap" 'Summer'}}>Summer</div>
+        <div class="item" {{action "setCmap" 'Autumn'}}>Autumn</div>
+        <div class="item" {{action "setCmap" 'Winter'}}>Winter</div>
+        <div class="item" {{action "setCmap" 'Cool'}}>Cool</div>
+        <div class="item" {{action "setCmap" 'Hot'}}>Hot</div>
+        <div class="item" {{action "setCmap" 'Wistia'}}>Wistia</div>
+        <div class="item" {{action "setCmap" 'Purple-Green'}}>Purple-Green</div>
+        <div class="item" {{action "setCmap" 'Purple-Orange'}}>Purple-Orange</div>
+        <div class="item" {{action "setCmap" 'Red-Gray'}}>Red-Gray</div>
+        <div class="item" {{action "setCmap" 'Spectral'}}>Spectral</div>
+        <div class="item" {{action "setCmap" 'Cool-Warm'}}>Cool-Warm</div>
+      </div>
+    </div>
+    <div class="contrast">
+      <div class="left-label">Min: </div>
+      <div class="min">
+        {{input type="range" min=0
+          max=255 value=stream.img.min}}
+      </div>
+      <div>
+        <div class="field-container">
+          {{input value=stream.img.min class="contrast-field"}}
+        </div>
+      </div>
+      <div class="left-label">Max: </div>
+      <div class="max">
+         {{input id="max-slider" type="range" min=0
+            max=255 value=stream.img.max}}
+      </div>
+      <div>
+        <div class="field-container">
+          {{input value=stream.img.max class="contrast-field"}}
+        </div>
+      </div>
+      <div id="compute-button" class="ui small compact inverted icon bottom menu field-container">
+        <a class="item" {{action "computeROIs" model.firebaseWorkspace.rois model.workspace}}>
+          Compute All
+        </a>
+        <a class="item" {{action "exportExcel"}}>
+          Export
+        </a>
+      </div>
+    </div>
+  </div> {{!-- End flexed div --}}
+  {{! End Addition }}
+
+  <div class="ui padded grid">
+    {{! Main Canvas }}
+    {{#zoomable-container class="twelve wide column imagestack-container"
+      dimension=(mut stream.mainCanvasDimension) as |dim|}}
+      {{#x-layer
+        width=stream.img.width
+        height=stream.img.height
+        dimension=dim do=(route-action "do") as |layer|}}
+        <div class="ui {{if model.workspace.roisBusy "active"}} dimmer">
+          <div class="ui loader"></div>
+        </div>
+
+        {{layer.canvas-2d id="stream" buffer=stream.img.buffer}}
+
+        {{layer.roi-manager-v2 workspace=model.workspace
+          id="roi-manager"
+          file=model.file
+          rois=model.firebaseWorkspace.rois
+          firebaseWorkspace=model.firebaseWorkspace
+          curID=model.file.roi_count
+          add=(action "addROI")
+          update=(action "updateROI")
+          delete=(action "deleteROI")
+          compute=(action "computeROIs")
+          ensureWorkspace=(action "ensureWorkspace")
+          updateTable=(action "updateTable")
+          placeMode=placeMode
+          disableHandles=disableHandles}}
+
+      {{/x-layer}}
+    {{/zoomable-container}}
+
+    {{! ROI Control }}
+    <div class="four wide column roi-list-container">
+      <h3>Shortcuts</h3>
+      <li>"m" :  <span class={{if placeMode "active-mode"}}>Place Mode</span></li>
+      <li>"d" :  <span class={{if disableHandles "active-mode"}}>Disable Handles</span></li>
+
+         {{!--style={{stream.mainCanvasDimension.parallelContainerStyle}}>
+      {{#each model.workspace.loadedROIs as |roi index|}}-
+        {{#each model.rois as |roi index|}}
+        {{x-sbx-analysis/roi/hierarchy roi=roi colorIndex=index}}
+        <section class="ui clearing divider"></section>
+      {{else}}
+        <p class="ui mini yellow header">No ROIs yet...</p>
+         {{/each}}--}}
+    </div>
+
+  </div>
+
+  {{!--{{#unless (eq model.condition.stimulus 'SparseNoiseStimulus')}}--}}
+  {{#if model.workspace.activeROI}}
+  <section class="ui clearing divider"></section>
+  <img class="ui fluid image" alt="SF Tuning Curve"
+    src="data:image/png;base64,{{model.workspace.activeROI.dtsfreqfitByCT.value.plot}}" />
+  {{/if}}
+  <section class="ui clearing divider"></section>
+  <h4 class="ui header">
+    <span class="ui label">SF: {{model.workspace.cur_sfreq}}</span>
+    <span class="ui label">Contrast: {{model.workspace.cur_contrast}}</span>
+    <span class="ui label">TF: {{model.workspace.cur_tfreq}}</span>
+  </h4>
+  <section class="ui clearing divider"></section>
+  <div id=stat class="ui" height="350px" style="overflow-x: scroll; font-family: monospace;">
+    {{scanbox-analyzer/stats/wide-table
+      condition=model.condition
+      rois=selection}}
+</div>
+  {{!--{{else}}--}}
+    {{!--{{/unless}}--}}
+
+  {{!-- logging message
+  <section class="ui clearing divider"></section>
+  <div class="ui inverted basic segment"
+    style="height: 200px; overflow-y: scroll;">
+    <pre>{{model.condition.message}}</pre>
+  </div>
+  --}}
+
+</div>
+<style>
+.active-mode {
+  color: #77f442;
+}
+#route-sbx-analysis .roi.dropdown .menu .item {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+#route-sbx-analysis .ui.dropdown .menu > .header {
+  font-style: italic;
+  margin: 0.25rem 0.5rem 0.25rem;
+}
+#stat {
+  height: 350px;
+}
+#compute-button {
+  margin-left: 5px;
+}
+</style>
