@@ -6,9 +6,9 @@ import { inject as service } from '@ember/service';
 //import actions from 'pacu/scanbox-analyzer/actions';
 import SocketStream from 'pacu-v2/socketstream/socketstream';
 
-const modname = 'pacu-v2.core.io.scanbox.impl2';
+const modname = 'pacu.core.io.scanbox.impl2';
 const clsname = 'ScanboxIOStream';
-const moduleName = 'pacu-v2.core.io.scanbox.model.db';
+const moduleName = 'pacu.core.io.scanbox.model.db';
 const baseName = 'SQLite3Base';
 const include = 'condition,condition.trials';//dtoverallmeans,rois,rois.dtorientationsmeans,rois.dtorientationbestprefs,rois.dtorientationsfits,rois.dtanovaeachs,rois.dtsfreqfits,rois.dtanovaalls';
 const queryParam = { include };
