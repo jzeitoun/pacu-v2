@@ -5,7 +5,7 @@ import EmberObject, { computed, observer } from '@ember/object';
 
 function importRaw(cond={}) {
   const self = this;
-  const modname = 'pacu.core.io.scanbox.impl2';
+  const modname = 'pacu-v2.core.io.scanbox.impl2';
   const clsname = 'ScanboxIO';
   const $console = Ember.$('#import-progress');
   const messages = this.get('messages');

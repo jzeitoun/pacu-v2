@@ -136,6 +136,65 @@ input.visual.option
   stroke-width: 1.5px;
 }
 
+marker#base-marker {
+  fill: #FFFFFF;
+  fill-opacity: 0.8;
+}
+
+rect {
+  fill: #115194;
+  fill-opacity: 0.2;
+  stroke: #FFFFFF;
+  stroke-width: 1;
+  stroke-opacity: 0.8;
+}
+
+polygon {
+  /* fill: #8DF927; /* lime */
+  fill: #880595; /* purple */
+  fill-opacity: 0.65;
+  stroke: #FFFFFF;
+  stroke-width: 0.8;
+  stroke-opacity: 0;
+}
+
+polygon.in-progress {
+  fill: #FD9612;
+}
+
+polygon.computed {
+  fill: #8DF927; /* lime */
+}
+
+polygon:hover {
+  stroke-opacity: 0.8;
+  marker-start: url(#base-marker);
+  marker-mid: url(#base-marker);
+}
+
+polygon.prototype, .pointdrag {
+  stroke-opacity: 0.8;
+  marker-start: url(#base-marker);
+  marker-mid: url(#base-marker);
+}
+
+polygon.selected, polygon.dragging {
+  fill: #F02C15;
+  fill-opacity: 0.6;
+  stroke-opacity: 0.8;
+}
+
+.visible-id {
+  visibility: visible;
+  position: relative;
+}
+
+.hidden-id {
+  visibility: hidden;
+  position: relative;
+}
+
+
 /*.dot {
   stroke: transparent;
   stroke-width: 10px;  

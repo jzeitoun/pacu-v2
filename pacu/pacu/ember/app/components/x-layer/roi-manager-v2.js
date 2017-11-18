@@ -40,6 +40,19 @@ export default Ember.Component.extend({
   rois: null,
   firebaseWorkspace: null,
   curID: null,
+  activeID: null,
+  activeROIChanged: Ember.observer('activeID', function() {
+    var rois = this.get('rois');
+    //rois.map(function(roi) {
+    //  roi.set('selected', false);
+    //});
+    var activeROI = rois.filterBy('roi_id', Number(this.get('activeID'))).get('firstObject');
+    if (activeROI) {
+      activeROI.set('selected', true);
+      this.get('updateTable')([activeROI]);
+      console.log('active ID changed');
+    }
+  }),
   selectedROIs: Ember.computed.filterBy('rois', 'selected', true),
   computedROIs: Ember.computed.filterBy('rois', 'computed', true),
   uncomputedROIs: Ember.computed.filterBy('rois', 'computed', false),
@@ -63,13 +76,6 @@ export default Ember.Component.extend({
       'roiPrototype.centroid.{x,y}',
     function() { this.updatePrototype(); }
   ),
-  //selectedChanged: Ember.observer('selectedROIs.[]', function() {
-  //  console.log('change detected');
-  //  if (!this.get('selectMode')) {
-  //    console.log('table update triggered');
-  //    Ember.run.next(this, 'updateTable', this.get('selectedROIs'));
-  //  };
-  //}),
 
   actions: {
     triggerUpdate(roi_id) {
@@ -173,7 +179,8 @@ export default Ember.Component.extend({
       if (e.target.tagName == 'polygon') {
         var clickedROI = this.get('rois').filterBy('roi_id', Number(e.target.dataset['roiId']))[0];
         clickedROI.set('selected', true);
-        this.get('updateTable')([clickedROI]);
+        this.set('activeID', clickedROI.get('roi_id'));
+        //this.get('updateTable')([clickedROI]);
         console.log(`Plotting ROI ${clickedROI.get('roi_id')}`);
       };
     };

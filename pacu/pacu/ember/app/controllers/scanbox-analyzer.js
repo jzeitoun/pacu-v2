@@ -102,6 +102,14 @@ export default Controller.extend({
       roi.save()
     },
 
+    deselectAll() {
+      const roiRecord = this.get('roiRecord');
+      var rois = roiRecord.get('all').filterBy('selected', true);
+      rois.map(function(roi) {
+        roi.set('selected', false);
+      });
+    },
+
     updateTable(selectedROIs) {
       const store = this.get('store');
       var activeIDs = selectedROIs.map(function(roi) { return roi.get('roi_id'); })
@@ -194,30 +202,33 @@ export default Controller.extend({
     ensureWorkspace(file, workspace, firebaseWorkspace) {
       const store = this.get('store');
       var roi_count = file.get('roi_count');
-      var roiData = store.findAll('roi').then(result => {
-        var roiDataObjects = result.toArray();
-        var existingIDs = roiDataObjects.map(function(roi) {
-          return Number(roi.id);
-        });
+      store.findRecord('workspace', workspace.id, { include: 'rois' }).then(result => {
+        var totalExistingIDs = result.get('rois').get('length')
+        //var roiData = store.findAll('roi').then(result => {
+        //var roiDataObjects = result.toArray();
+        //var existingIDs = roiDataObjects.map(function(roi) {
+        //  return Number(roi.id);
+        //});
+        //if (existingIDs.length) {
         // check if number of database entries matches firebase roi_count
-        if (existingIDs.length) {
-          var neededEntries = roi_count - Math.max(...existingIDs);
-          // if not, add extra blank entries
-          if (neededEntries > 0) {
-            while(neededEntries--) {
-              var newRecord = store.createRecord('roi', {
-                polygon: [
-                  {x:0, y:0},
-                  {x:0, y:10},
-                  {x:10, y:10},
-                  {x:10, y:0}
-                ],
-                workspace: workspace
-              });
-              newRecord.save().then((newRecord) => {
-                console.log(`Record ${newRecord.id} added`);
-              });
-            };
+        //if (totalExistingIDs) {
+          //var neededEntries = roi_count - Math.max(...existingIDs);
+        var neededEntries = roi_count - totalExistingIDs;
+        // if not, add extra blank entries
+        if (neededEntries > 0) {
+          while(neededEntries--) {
+            var newRecord = store.createRecord('roi', {
+              polygon: [
+                {x:0, y:0},
+                {x:0, y:10},
+                {x:10, y:10},
+                {x:10, y:0}
+              ],
+              workspace: workspace
+            });
+            newRecord.save().then((newRecord) => {
+              console.log(`Record ${newRecord.id} added`);
+            });
           };
         };
       });
@@ -233,14 +244,12 @@ export default Controller.extend({
 
     exportExcel() {
       var computedROIs = this.get('roiRecord').get('computed');
-      debugger;
       const {io, ws} = this.model.name;
       const fname = io.split('.')[0];
       const ids = [];
       for (var i=0; i<computedROIs.length; i++) {
         ids.push(computedROIs[i].get('roi_id'));
       }
-      console.log(ids);
       this.toast.info(`Exporting data as Excel...`);
       this.model.stream.invokeAsBinary('export_excel', ids.join(), ws).then(data => {
         const ts = (new Date).toCustomString();
@@ -296,18 +305,52 @@ export default Controller.extend({
       });
     },
 
+    createProjection() {
+      console.log('projection generated');
+      const stream = this.model.stream;
+      this.set('projBusy', true);
+      stream.invoke('ch0.generate_projections').finally(() => {
+        this.set('projBusy', false);
+        stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump',);
+      });
+    },
+
     overlayMPI() {
       this.toast.info('Locating max projection image...');
       this.model.stream.overlayMPI();
     },
 
-    exportMPI() {
-      this.toast.info('Exporting max projection image...');
-      const wid = this.model.workspace.id;
-      this.model.stream.requestMPITiff().then(data => {
-        const ts = +(new Date);
-        download.fromArrayBuffer(data, `${ts}-${wid}-max-projection.tiff`, 'image/tiff');
-      });
+    overlayProjection(type) {
+      this.toast.info(`${type} projection image overlaid.`);
+      this.model.stream.overlayProjection(type);
+    },
+
+    exportProjection(type) {
+      const {io, ws} = this.model.name;
+      const fname = io.split('.')[0];
+      const ts = (new Date).toCustomString();
+      switch (type) {
+        case 'max':
+          this.toast.info('Exporting max projection image...');
+          this.model.stream.requestMaxPITiff().then(data => {
+            download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-max-projection.tif`, 'image/tiff');
+          });
+          break;
+        case 'mean':
+          this.toast.info('Exporting mean projection image...');
+          this.model.stream.requestMeanPITiff().then(data => {
+            download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-mean-projection.tif`, 'image/tiff');
+          });
+          break;
+        case 'sum':
+          this.toast.info('Exporting sum projection image...');
+          this.model.stream.requestSumPITiff().then(data => {
+            download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-sum-projection.tif`, 'image/tiff');
+          });
+          break;
+        default:
+          return;
+      };
     },
 
     exportSFreqFitDataAsMat(roi) {

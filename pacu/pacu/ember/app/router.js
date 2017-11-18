@@ -9,6 +9,7 @@ const Router = EmberRouter.extend({
 Router.map(function() {
   this.route('scanbox-manager');
   this.route('scanbox-analyzer', { path: '/scanbox-analyzer/*hops' });
+  this.route('chart-route');
 });
 
 export default Router;

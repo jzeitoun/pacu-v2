@@ -13,7 +13,7 @@ export default DS.Model.extend({
   sog_initial_guess: DS.attr(),
   params: DS.attr(),
   // iopath: attr('string'),
-  //rois: hasMany('roi'),
+  rois: DS.hasMany('roi'),
   // dtoverallmeans: hasMany('dtoverallmean'),
   // colormaps: hasMany('colormap'),
   condition: DS.belongsTo('condition'),

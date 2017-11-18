@@ -51,15 +51,23 @@
   </a>
   --}}
 
-  <div class="ui simple dropdown {{if maxpBusy "disabled"}} item">
-    Max Projection Image {{if stream.ch0HasMaxp "✓" "✗"}}
+  {{!--<div class="ui simple dropdown {{if maxpBusy "disabled"}} item">--}}
+  <div class="ui simple dropdown {{if projBusy "disabled"}} item">
+    Z-Projection{{!-- {{if stream.ch0HasMaxp "✓" "✗"}}--}}
     <i class="dropdown icon"></i>
     <div class="menu">
-      <div class="item" {{action "initMPI"}}>Initialize</div>
-      <div class="item">Live-Test</div>
+      <div class="item" {{action "createProjection"}}>Initialize</div>
       {{#if stream.ch0HasMaxp}}
-        <div class="item" {{action "overlayMPI"}}>Overlay MPI Window</div>
-        <div class="item" {{action "exportMPI"}}>Export MPI as Tiff</div>
+        <div class="item" {{action "overlayProjection" "max"}}>Overlay Max Projection</div>
+        <div class="item" {{action "exportProjection" "max"}}>Export MaxProjection as Tiff</div>
+      {{/if}}
+      {{#if stream.ch0HasMeanp}}
+        <div class="item" {{action "overlayProjection" "mean"}}>Overlay Mean Projection</div>
+        <div class="item" {{action "exportProjection" "mean"}}>Export MeanProjection as Tiff</div>
+      {{/if}}
+      {{#if stream.ch0HasSump}}
+        <div class="item" {{action "overlayProjection" "sum"}}>Overlay Sum Projection</div>
+        <div class="item" {{action "exportProjection" "sum"}}>Export SumProjection as Tiff</div>
       {{/if}}
     </div>
   </div>
@@ -152,8 +160,19 @@
 
   <section class="ui clearing divider"></section>
   <div class="flex-container"> {{!-- Start flex div --}}
+
+    <div class="left-label">Index: </div>
+    <div class="field-container">
+        {{input value=stream.img.curIndex class="cur-index"}}
+    </div>
+
+    <div class="left-label">Active ROI: </div>
+    <div class="field-container">
+      {{input value=activeID class="cur-index" action="deselectAll" on="key-down"}}
+    </div>
+
     {{! Aadded by RA }}
-    <div class="ui compact inverted icon menu">
+    {{!--<div class="ui compact inverted icon menu">
       {{! Dropdown to select ROI visualization mode. If true uses min mode. Right now this is handled as a bool.}}
       <div class="ui simple dropdown item">
         Display:{{#if MinModeROIs}}Minimal{{else}}Full Featured{{/if}}
@@ -172,8 +191,45 @@
       </div>
 
     {{! End }}
-    </div>
+    </div>--}}
 
+    <div class="ui simple dropdown colormap {{if projBusy "disabled"}} item">
+      Z-Projection{{!-- {{if stream.ch0HasMaxp "✓" "✗"}}--}}
+      <i class="dropdown icon"></i>
+      <div class="menu">
+        <div class="item" {{action "createProjection"}}>Initialize</div>
+        {{#if stream.ch0HasMaxp}}
+        <div class="item">
+          <i class="dropdown icon"></i>
+          Max Projection
+          <div class="menu">
+            <div class="item" {{action "overlayProjection" "max"}}>Overlay</div>
+            <div class="item" {{action "exportProjection" "max"}}>Export as Tiff</div>
+          </div>
+        </div>
+        {{/if}}
+        {{#if stream.ch0HasMeanp}}
+        <div class="item">
+          <i class="dropdown icon"></i>
+          Mean Projection
+          <div class="menu">
+            <div class="item" {{action "overlayProjection" "mean"}}>Overlay</div>
+            <div class="item" {{action "exportProjection" "mean"}}>Export as Tiff</div>
+          </div>
+        </div>
+        {{/if}}
+        {{#if stream.ch0HasSump}}
+        <div class="item">
+          <i class="dropdown icon"></i>
+          Sum Projection
+            <div class="menu">
+              <div class="item" {{action "overlayProjection" "sum"}}>Overlay</div>
+              <div class="item" {{action "exportProjection" "sum"}}>Export as Tiff</div>
+            </div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
     {{! Added by (JZ)}}
     <div class="ui simple dropdown colormap{{if maxpBusy "disabled"}} item">
       Colormap
@@ -204,22 +260,60 @@
     <div class="contrast">
       <div class="left-label">Min: </div>
       <div class="min">
-        {{input type="range" min=0
-          max=255 value=stream.img.min}}
+        {{#if stream.img.maxp}}
+          {{input id="min-slider" type="range" min=0
+            max=255 value=stream.img.maxp_min}}
+        {{else if stream.img.meanp}}
+          {{input id="min-slider" type="range" min=0
+            max=255 value=stream.img.meanp_min}}
+        {{else if stream.img.sump}}
+          {{input id="min-slider" type="range" min=0
+            max=255 value=stream.img.sump_min}}
+        {{else}}
+          {{input id="min-slider" type="range" min=0
+            max=255 value=stream.img.min}}
+          {{/if}}
       </div>
       <div>
         <div class="field-container">
-          {{input value=stream.img.min class="contrast-field"}}
+          {{#if stream.img.maxp}}
+            {{input value=stream.img.maxp_min class="contrast-field"}}
+          {{else if stream.img.meanp}}
+            {{input value=stream.img.meanp_min class="contrast-field"}}
+          {{else if stream.img.sump}}
+            {{input value=stream.img.sump_min class="contrast-field"}}
+          {{else}}
+            {{input value=stream.img.min class="contrast-field"}}
+          {{/if}}
         </div>
       </div>
       <div class="left-label">Max: </div>
       <div class="max">
-         {{input id="max-slider" type="range" min=0
+        {{#if stream.img.maxp}}
+          {{input id="max-slider" type="range" min=0
+            max=255 value=stream.img.maxp_max}}
+        {{else if stream.img.meanp}}
+          {{input id="max-slider" type="range" min=0
+            max=255 value=stream.img.meanp_max}}
+        {{else if stream.img.sump}}
+          {{input id="max-slider" type="range" min=0
+            max=255 value=stream.img.sump_max}}
+        {{else}}
+          {{input id="max-slider" type="range" min=0
             max=255 value=stream.img.max}}
+          {{/if}}
       </div>
       <div>
         <div class="field-container">
-          {{input value=stream.img.max class="contrast-field"}}
+          {{#if stream.img.maxp}}
+            {{input value=stream.img.maxp_max class="contrast-field"}}
+          {{else if stream.img.meanp}}
+            {{input value=stream.img.meanp_max class="contrast-field"}}
+          {{else if stream.img.sump}}
+            {{input value=stream.img.sump_max class="contrast-field"}}
+          {{else}}
+            {{input value=stream.img.max class="contrast-field"}}
+          {{/if}}
         </div>
       </div>
       <div id="compute-button" class="ui small compact inverted icon bottom menu field-container">
@@ -254,12 +348,13 @@
           rois=model.firebaseWorkspace.rois
           firebaseWorkspace=model.firebaseWorkspace
           curID=model.file.roi_count
+          activeID=activeID
           add=(action "addROI")
           update=(action "updateROI")
           delete=(action "deleteROI")
           compute=(action "computeROIs")
-          ensureWorkspace=(action "ensureWorkspace")
           updateTable=(action "updateTable")
+          ensureWorkspace=(action "ensureWorkspace")
           placeMode=placeMode
           disableHandles=disableHandles}}
 

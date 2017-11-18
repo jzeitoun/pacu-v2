@@ -35,7 +35,7 @@ module.exports = function(environment) {
     toastrOptions: {
       positionClass: 'toast-top-center',
       preventDuplicates: false,
-      timeOut: '5000'
+      timeOut: '2000'
     }
   };
 

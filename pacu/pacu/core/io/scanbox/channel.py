@@ -62,6 +62,8 @@ class ScanboxChannel(object):
         self.path = Path(path).ensure_suffix('.chan')
         self.channel = int(self.path.stem)
         self.maxppath = self.path.join_suffixes('.maxp.npy')
+        self.meanppath = self.path.join_suffixes('.meanp.npy')
+        self.sumppath = self.path.join_suffixes('.sump.npy')
         self.mmappath = self.path.join_suffixes('.mmap.npy')
         self.statpath = self.path.join_suffixes('.stat.npy')
         self.metapath = self.path.join_suffixes('.meta.json')
@@ -119,26 +121,40 @@ class ScanboxChannel(object):
         np.save(self.statpath.str, stat)
         print 'Converting done!'
         return self
+    @property
+    def has_maxp(self):
+        return self.maxppath.is_file()
+    @property
+    def has_meanp(self):
+        return self.meanppath.is_file()
+    @property
+    def has_sump(self):
+        return self.sumppath.is_file()
     def request_frame(self, index):
-        #return self.cmap(self.mmap8bit[index], bytes=True).tostring()
         return self.cmap8bit.to_rgba(self.mmap8bit[index], bytes=True).tostring()
+    def request_projection(self, image_type):
+        if image_type == 'max':
+            proj = self.maxp.view('uint8')[..., 1::2]
+        elif image_type == 'mean':
+            proj = self.meanp.view('uint8')[..., 1::2]
+        elif image_type == 'sum':
+            proj = self.sump.view('uint8')[..., 1::2]
+        return self.cmap8bit.to_rgba(proj, bytes=True).tostring()
     def set_cmap(self, cmap):
         self.cmap = colormaps[cmap]
     def set_contrast(self, min_val, max_val):
-        self.min_val = int(min_val)
-        self.max_val = int(max_val)
+            self.min_val = int(min_val)
+            self.max_val = int(max_val)
     @memoized_property
     def mmap8bit(self):
         return self._mmap.view('uint8'
             )[self.c_focal_pane::self.n_focal_pane, :, 1::2]
     @property
     def cmap8bit(self):
-        #return ScalarMappable(norm=self.norm, cmap=self.dcmap.distorted)
         return ScalarMappable(norm=self.norm, cmap=self.cmap)
     @property
     def norm(self):
         return Normalize(
-            #vvmin=self.stat.MIN.min()/255, vmax=(self.stat.MAX.max()*0.9)/255)
             vmin=self.min_val, vmax=self.max_val)
     @memoized_property
     def dcmap(self):
@@ -151,11 +167,11 @@ class ScanboxChannel(object):
     #    y2 = float(ymid2) / 100
     #    self.dcmap = DistortedColormap2(name,
     #        xmid1=x1, ymid1=y1, xmid2=x2, ymid2=y2)
-    def request_maxp(self, cmap_kwargs):
-        dcmap = DistortedColormap2('gray', **cmap_kwargs)
-        return dcmap.distorted(
-        # return gray(
-            self.maxp.view('uint8')[..., 1::2], bytes=True).tostring()
+    #def request_maxp(self, cmap_kwargs):
+    #    dcmap = DistortedColormap2('gray', **cmap_kwargs)
+    #    return dcmap.distorted(
+    #    # return gray(
+    #        self.maxp.view('uint8')[..., 1::2], bytes=True).tostring()
     def request_maxp_tiff(self):
         arr = self.maxp.view('uint8')[..., 1::2]
         i = Image.fromarray(arr)
@@ -164,35 +180,76 @@ class ScanboxChannel(object):
         value = io.getvalue()
         io.close()
         return value
-    @property
-    def has_maxp(self):
-        return self.maxppath.is_file()
+    def request_meanp_tiff(self):
+        arr = self.meanp.view('uint8')[..., 1::2]
+        i = Image.fromarray(arr)
+        io = StringIO()
+        i.save(io, format='tiff')
+        value = io.getvalue()
+        io.close()
+        return value
+    def request_sump_tiff(self):
+        arr = self.sump.view('uint8')[..., 1::2]
+        i = Image.fromarray(arr)
+        io = StringIO()
+        i.save(io, format='tiff')
+        value = io.getvalue()
+        io.close()
+        return value
     @memoized_property
     def maxp(self):
         return np.load(self.maxppath.str) if self.maxppath.is_file() else None
-#     @maxp.invalidator
-#     def create_maxp(self):
-#         print 'Create max projection image...could take up from a few minutes to hours.'
-#         frame = self.mmap.max(0)
-#         np.save(self.maxppath.str, frame)
-#         print 'done!'
-    @maxp.invalidator
-    def create_maxp(self):
-        print 'Create max projection image...could take up from a few minutes to hours.'
+    @memoized_property
+    def meanp(self):
+        return np.load(self.meanppath.str) if self.meanppath.is_file() else None
+    @memoized_property
+    def sump(self):
+        return np.load(self.sumppath.str) if self.sumppath.is_file() else None
+    #@maxp.invalidator
+    #def create_maxp(self):
+    #    print 'Create max projection image...could take up from a few minutes to hours.'
+    #    chan = self.mmap
+    #    depth = len(chan)
+    #    image = np.zeros_like(chan[0])
+    #    p = psutil.Process()
+    #    for i, frame in enumerate(chan):
+    #        if (i % 500) == 0:
+    #            mem_pct = p.memory_percent()
+    #            if mem_pct > 75:
+    #                raise MemoryError('Too much memory used. Processing aborted.')
+    #            print ('Processing frames at ({}/{}). '
+    #                   'Mem usage {}%').format(i, depth, mem_pct)
+    #        image = np.maximum(image, frame)
+    #    np.save(self.maxppath.str, image)
+    #    print 'done!'
+    def generate_projections(self):
+        print 'Generating max, mean, and sum projection images...'
         chan = self.mmap
         depth = len(chan)
-        image = np.zeros_like(chan[0])
+        max_image = np.zeros_like(chan[0])
+        sum_image = np.zeros(chan[0].shape, dtype='float64')
+        mean_image = chan[0].astype('float64')
         p = psutil.Process()
         for i, frame in enumerate(chan):
             if (i % 500) == 0:
                 mem_pct = p.memory_percent()
                 if mem_pct > 75:
-                    raise MemoryError('Too much memory used. Processing aborted.')
+                    raise MemoryError('Too much memory used. Aborting process.')
                 print ('Processing frames at ({}/{}). '
-                       'Mem usage {}%').format(i, depth, mem_pct)
-            image = np.maximum(image, frame)
-        np.save(self.maxppath.str, image)
-        print 'done!'
+                       'Mem usage: {}%').format(i, depth, mem_pct)
+            max_image = np.maximum(max_image, frame)
+            sum_image = sum_image + frame
+            idx = i+1
+            if idx > 1:
+                img_weight = 1.0/idx
+                total_weight = (idx - 1.0)/idx
+                mean_image = mean_image*total_weight + frame*img_weight
+        sum_image = ((2**16-1) * (sum_image/np.max(sum_image))).astype('uint16')
+        mean_image = mean_image.astype('uint16')
+        np.save(self.maxppath.str, max_image)
+        np.save(self.meanppath.str, mean_image)
+        np.save(self.sumppath.str, sum_image)
+        print 'Done!'
     @memoized_property
     def stat(self):
         stat = np.load(self.statpath.str)
