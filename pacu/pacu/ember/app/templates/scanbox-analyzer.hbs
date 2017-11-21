@@ -320,8 +320,23 @@
         <a class="item" {{action "computeROIs" model.firebaseWorkspace.rois model.workspace}}>
           Compute All
         </a>
-        <a class="item" {{action "exportExcel"}}>
+
+        <a class="item" {{action "loadJSONROIs"}}>
+          Import
+        </a>
+        <input type="file" id="roi-import" style="display: none" onchange={{action "importJSONROIs"}}/>
+
+        <a class="ui dropdown item">
           Export
+          <i class="dropdown icon"></i>
+          <div class="menu">
+            <span class="item" {{action "exportExcel"}}>
+              Excel
+            </span>
+            <span class="item" {{action "exportJSONROIs"}}>
+              ROIs
+            </span>
+          </div>
         </a>
       </div>
     </div>
@@ -409,6 +424,17 @@
   --}}
 
 </div>
+
+<script>
+  $(document)
+    .ready(function() {
+      $('.ui.dropdown')
+        .dropdown()
+      ;
+    });
+</script>
+
+
 <style>
 .active-mode {
   color: #77f442;

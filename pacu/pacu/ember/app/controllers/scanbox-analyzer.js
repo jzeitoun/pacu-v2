@@ -3,6 +3,7 @@ import Controller from '@ember/controller';
 import { inject as service } from '@ember/service';
 import download from 'pacu-v2/utils/download';
 import batch from 'pacu-v2/utils/batch';
+import firebase from 'firebase';
 
 const include = 'dtoverallmean,dtorientationbestprefs,dtorientationsmeans,dtorientationsfits,dtanovaeachs,dtsfreqfits,dtanovaalls';
 const queryParams = { include };
@@ -77,6 +78,7 @@ function importROIFileDiffChanged(e) { // `this` is the current route
   }
   fr.readAsText(file);
 }
+
 export default Controller.extend({
   init() {
     this._super(...arguments);
@@ -257,6 +259,59 @@ export default Controller.extend({
       }).catch(reason => { debugger; });
     },
 
+    exportJSONROIs() {
+      var rois = this.get('roiRecord').get('all');
+      const {io, ws} = this.model.name;
+      const fname = io.split('.')[0];
+      const ts = (new Date).toCustomString();
+      var data = rois.map(function(roi) {
+        return roi.getProperties('roi_id','polygon','lastComputedPolygon','neuropil_enabled',
+          'neuropil_ratio','neuropil_factor','neuropil_polygon');
+      });
+      download(JSON.stringify(data), `${fname}-${ws}-${ts}-rois.json`, 'plain/text');
+
+      function download(text, name, type) {
+          var a = document.createElement("a");
+          var file = new Blob([text], {type: type});
+          a.href = URL.createObjectURL(file);
+          a.download = name;
+          a.click();
+      }
+    },
+
+    loadJSONROIs(e) {
+      Ember.$('#roi-import').click();
+    },
+
+    importJSONROIs(e) {
+      var dataFile = e.target.files[0];
+      const route = this;
+      const fr = new FileReader();
+      fr.onload = (/*e*/) => {
+        const data = JSON.parse(fr.result);
+        try {
+          data.forEach(roi => {
+            route.model.file.incrementProperty('roi_count');
+            route.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
+            roi.created = firebase.database.ServerValue.TIMESTAMP;
+            roi.roi_id = route.model.file.get('roi_count');
+            var newROI = route.get('store').createRecord('fb-roi', roi);
+            route.model.firebaseWorkspace.get('rois').addObject(newROI);
+            newROI.save().then(function() {
+              return route.model.firebaseWorkspace.save();
+            });
+          });
+        } catch(e) {
+          console.log(e);
+          this.toast.warning('Invalid file');
+        } finally {
+          this.toast.info(`${data.length} ROI(s) imported.`);
+          Ember.$('roi-input').val(null);
+        }
+      }
+      fr.readAsText(dataFile);
+    },
+
     updateModel(model) {
       return model.save().then(() => {
         const name = model.constructor.modelName;
@@ -321,7 +376,7 @@ export default Controller.extend({
     },
 
     overlayProjection(type) {
-      this.toast.info(`${type} projection image overlaid.`);
+      this.toast.info(`Overlaid ${type} projection image.`);
       this.model.stream.overlayProjection(type);
     },
 
