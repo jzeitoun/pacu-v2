@@ -24,68 +24,18 @@ Date.prototype.toCustomString = function() {
     '-' + pad(this.getUTCSeconds());
 };
 
-function importROIFileAllChanged(e) { // `this` is the current route
-  const input = e.target;
-  const route = this;
-  const file = e.target.files[0];
-  const fr = new FileReader();
-  fr.onload = (/*e*/) => {
-    const data = JSON.parse(fr.result);
-    let news;
-    try {
-      news = data.rois;
-      news.forEach(r => {
-        const roi = route.store.createRecord('roi', r.attrs);
-        roi.set('workspace', route.currentModel.workspace);
-        roi.save();
-      });
-    } catch(e) {
-      console.log(e);
-      this.toast.warning('Invalid file');
-    } finally {
-      this.toast.info(`${news.length} ROI(s) imported.`);
-      Ember.$(input).val(null);
-    }
-  }
-  fr.readAsText(file);
-}
-
-function importROIFileDiffChanged(e) { // `this` is the current route
-  const input = e.target;
-  const route = this;
-  const file = e.target.files[0];
-  const fr = new FileReader();
-  fr.onload = (/*e*/) => {
-    const data = JSON.parse(fr.result);
-    let news;
-    try {
-      const entry = this.model.workspace.get('loadedROIs').getEach('params.cell_id').compact();
-      news = data.rois.filterBy('attrs.params.cell_id').filter(roi => {
-        return !entry.includes(roi.attrs.params.cell_id);
-      });
-      news.forEach(r => {
-        const roi = route.store.createRecord('roi', r.attrs);
-        roi.set('workspace', route.currentModel.workspace);
-        roi.save();
-      });
-    } catch(e) {
-      console.log(e);
-      this.toast.warning('Invalid file');
-    } finally {
-      this.toast.info(`${news.length} ROI(s) imported.`);
-      Ember.$(input).val(null);
-    }
-  }
-  fr.readAsText(file);
-}
-
 export default Controller.extend({
   init() {
     this._super(...arguments);
     this.set('selection', []);
+    this.set('importing', false);
   },
   roiRecord: service(),
   actions: {
+    openModal(name) {
+      $('.ui.' + name + '.modal').modal('show');
+    },
+
     addROI(roi, file, workspace) {
       file.save(); // saving roi_count to file to maintain compatibility with sqlite structure
       var newROI = this.get('store').createRecord('fb-roi', roi);
@@ -206,15 +156,6 @@ export default Controller.extend({
       var roi_count = file.get('roi_count');
       store.findRecord('workspace', workspace.id, { include: 'rois' }).then(result => {
         var totalExistingIDs = result.get('rois').get('length')
-        //var roiData = store.findAll('roi').then(result => {
-        //var roiDataObjects = result.toArray();
-        //var existingIDs = roiDataObjects.map(function(roi) {
-        //  return Number(roi.id);
-        //});
-        //if (existingIDs.length) {
-        // check if number of database entries matches firebase roi_count
-        //if (totalExistingIDs) {
-          //var neededEntries = roi_count - Math.max(...existingIDs);
         var neededEntries = roi_count - totalExistingIDs;
         // if not, add extra blank entries
         if (neededEntries > 0) {
@@ -265,7 +206,7 @@ export default Controller.extend({
       const fname = io.split('.')[0];
       const ts = (new Date).toCustomString();
       var data = rois.map(function(roi) {
-        return roi.getProperties('roi_id','polygon','lastComputedPolygon','neuropil_enabled',
+        return roi.getProperties('roi_id','polygon','neuropil_enabled',
           'neuropil_ratio','neuropil_factor','neuropil_polygon');
       });
       download(JSON.stringify(data), `${fname}-${ws}-${ts}-rois.json`, 'plain/text');
@@ -283,96 +224,48 @@ export default Controller.extend({
       Ember.$('#roi-import').click();
     },
 
-    importJSONROIs(e) {
+    importJSONROIs(name, e) {
       var dataFile = e.target.files[0];
+      // open import progress modal
       const route = this;
       const fr = new FileReader();
+      const modal = $('.ui.' + name + '.modal');
+      const progressBar = $('.ui.' + name + '.progress');
       fr.onload = (/*e*/) => {
         const data = JSON.parse(fr.result);
-        try {
-          data.forEach(roi => {
-            route.model.file.incrementProperty('roi_count');
-            route.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
-            roi.created = firebase.database.ServerValue.TIMESTAMP;
-            roi.roi_id = route.model.file.get('roi_count');
-            var newROI = route.get('store').createRecord('fb-roi', roi);
-            route.model.firebaseWorkspace.get('rois').addObject(newROI);
-            newROI.save().then(function() {
-              return route.model.firebaseWorkspace.save();
-            });
-          });
-        } catch(e) {
-          console.log(e);
-          this.toast.warning('Invalid file');
-        } finally {
-          this.toast.info(`${data.length} ROI(s) imported.`);
-          Ember.$('roi-input').val(null);
-        }
-      }
+        progressBar.progress({
+          total: data.length,
+          text: {
+            active: '{value} of {total} done',
+            success: 'Success!'
+          }
+        });
+        modal.modal('show');
+        route.model.file.set('roi_count', data.length);
+        route.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
+        var i = data.length;
+        (function delayedLoop(i) { // need to delay successive imports to prevent crash
+           setTimeout(function () {
+             var roi = data[i-1];
+             progressBar.progress('increment', 1);
+             roi.created = firebase.database.ServerValue.TIMESTAMP;
+             roi.lastComputedPolygon = "";
+             var newROI = route.get('store').createRecord('fb-roi', roi);
+             route.model.firebaseWorkspace.get('rois').addObject(newROI);
+             newROI.save().then(result => {
+               var message = `ROI ${newROI.get('roi_id')} imported.`;
+               route.model.firebaseWorkspace.save().then(result => {
+               });
+             });
+             if (--i) {
+               delayedLoop(i);      //  decrement i and call myLoop again if i > 0
+             } else {
+              setTimeout(function() { modal.modal('hide'); }, 2000);
+             };
+           }, 1)
+        })(i);
+      };
       fr.readAsText(dataFile);
-    },
-
-    updateModel(model) {
-      return model.save().then(() => {
-        const name = model.constructor.modelName;
-        const id = model.get('id');
-        return this.toast.info(`${name} #${id} updated.`);
-      });
-    },
-
-    deleteModel(model) {
-      return model.destroyRecord().then(() => {
-        const name = model.constructor.modelName;
-        const id = model.get('id');
-        return this.toast.info(`${name} #${id} deleted.`);
-      });
-    },
-
-    exportROIs() {
-      this.toast.info('Export ROIs...');
-      const url = '/api/json/scanbox_manager/rois_exported';
-      const name = this.model.name;
-      Ember.$.get(url, name).then(data => {
-        const ts = +(new Date);
-        download.fromByteString(data, `${ts}-${name.io}-${name.ws}-rois.json`, 'application/json');
-      });
-    },
-
-    importROIsAll() {
-      Ember.$('#roi-import-file-all').click();
-    },
-
-    importROIsDiff() {
-      Ember.$('#roi-import-file-diff').click();
-    },
-
-    reloadTracePlot() {
-      this.toast.info('Update traces...');
-      this.model.workspace.get('dtoverallmeans').reload();
-    },
-
-    initMPI() {
-      const stream = this.model.stream;
-      this.set('maxpBusy', true);
-      stream.invoke('ch0.create_maxp').finally(() => {
-        this.set('maxpBusy', false);
-        stream.mirror('ch0.has_maxp');
-      });
-    },
-
-    createProjection() {
-      console.log('projection generated');
-      const stream = this.model.stream;
-      this.set('projBusy', true);
-      stream.invoke('ch0.generate_projections').finally(() => {
-        this.set('projBusy', false);
-        stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump',);
-      });
-    },
-
-    overlayMPI() {
-      this.toast.info('Locating max projection image...');
-      this.model.stream.overlayMPI();
     },
 
     overlayProjection(type) {
@@ -408,82 +301,9 @@ export default Controller.extend({
       };
     },
 
-    exportSFreqFitDataAsMat(roi) {
-      const wid = this.model.workspace.id;
-      const rid = roi.id;
-      const contrast = this.model.workspace.get('cur_contrast');
-      this.model.stream.invokeAsBinary(
-      'export_sfreqfit_data_as_mat', wid, rid, contrast
-      ).then(data => {
-        const ts = +(new Date);
-        download.fromArrayBuffer(data, `${ts}-${wid}-${rid}-sfreqfit.mat`, 'application/json');
-      });
-    },
-
-    exportROITracesAsMat() {
-      const wid = this.model.workspace.id;
-      this.model.stream.invokeAsBinary(
-      'export_traces_as_mat', wid
-      ).then(data => {
-        const ts = +(new Date);
-        download.fromArrayBuffer(data, `${ts}-${wid}-traces.mat`, 'application/json');
-      });
-    },
-
-    computeAll() {
-      const rois = this.model.workspace.get('loadedROIs');
-      batch.promiseSequence(rois, 'refreshAll').then(() => {
-        this.toast.info('Batch process complete!');
-      });
-    },
-
     setCmap(cmap) {
       this.model.stream.set('img.cmap', cmap);
       this.toast.info(`Colormap changed to ${cmap}`);
-    },
-
-    neuropilOnAll() {
-      const rois = this.model.workspace.get('loadedROIs');
-      batch.promiseSequence(rois, 'enableNeuropil').then(() => {
-        this.toast.info('Batch process complete!');
-      });
-    },
-
-    neuropilOffAll() {
-      const rois = this.model.workspace.get('loadedROIs');
-      batch.promiseSequence(rois, 'disableNeuropil').then(() => {
-        this.toast.info('Batch process complete!');
-      });
-    },
-
-    neuropilRValueAll() {
-      const rois = this.model.workspace.get('loadedROIs');
-
-      const factor = prompt("Please enter neuropil R value",
-        this.get('neuropil_factor'));
-      const fFactor = parseFloat(factor);
-      if (isNaN(fFactor)) {
-        this.get('toast').warning(`Invalid value ${factor}.`);
-      } else {
-        rois.setEach('neuropil_factor', fFactor);
-        batch.promiseSequence(rois, 'save').then(() => {
-          this.toast.info('Batch process complete!');
-        });
-      }
-    },
-
-    //Added by RA.
-    //Listenes to state o the ROI toggle and changes a bool representing desired ROI visibility to pass to roi-manager
-    changeVisibilityROIs() {
-      this.set('toggleROIs', !this.get('toggleROIs'));
-    },
-
-    //Added by RA.
-    //Responds to selecton in Display Mode dropdown and changes a bool representing if should display minimal or full features. true is minimal. 
-    //Passes infor ro roi-manager. Should be updated to pass string for >2 options.
-    changeModeROIs(mode){
-      this.set('MinModeROIs', mode);
-      console.log(mode);
     },
 
     //updateFrameShift() {

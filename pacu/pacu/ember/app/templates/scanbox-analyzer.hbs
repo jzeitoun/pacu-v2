@@ -324,7 +324,17 @@
         <a class="item" {{action "loadJSONROIs"}}>
           Import
         </a>
-        <input type="file" id="roi-import" style="display: none" onchange={{action "importJSONROIs"}}/>
+        <input type="file" id="roi-import" style="display: none" onchange={{action "importJSONROIs" "import-progress"}}/>
+
+        {{#ui-modal name="import-progress" class="import-progress" closable=false}}
+          <h2 class="progress-header">Importing ROIs</h2>
+          {{#ui-progress class="import-progress teal indicating progress"}}
+            <div class="bar">
+              <div class="progress"></div>
+            </div>
+            <div class="label"></div>
+          {{/ui-progress}}
+        {{/ui-modal}}
 
         <a class="ui dropdown item">
           Export
@@ -381,7 +391,6 @@
       <h3>Shortcuts</h3>
       <li>"m" :  <span class={{if placeMode "active-mode"}}>Place Mode</span></li>
       <li>"d" :  <span class={{if disableHandles "active-mode"}}>Disable Handles</span></li>
-
          {{!--style={{stream.mainCanvasDimension.parallelContainerStyle}}>
       {{#each model.workspace.loadedROIs as |roi index|}}-
         {{#each model.rois as |roi index|}}

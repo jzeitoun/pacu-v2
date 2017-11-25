@@ -68,6 +68,22 @@ canvas#stream {
   }
 }
 
+h2:first-child {
+  margin-top: 0.5rem;
+}
+
+.progress-header {
+  color: #000000;
+  margin: 0.5rem;
+  position: relative;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ui.import-progress.modal {
+  padding: 0.5rem;
+}
+
 /*.sbx
   .ui.sticky
     transition -webkit-filter 1s linear

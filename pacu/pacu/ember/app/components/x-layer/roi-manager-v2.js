@@ -251,9 +251,18 @@ export default Ember.Component.extend({
           var disableHandles = this.get('disableHandles');
           break;
         case 'Delete':
-          this.get('selectedROIs').removeArrayObserver(this.get('selectedChanged'));
           this.get('selectedROIs').map(this.get('delete'));
-          //this.get('selectedROIs').addArrayObserver(this.get('selectedChanged'));
+          break;
+        case 'Backspace':
+          this.get('selectedROIs').map(this.get('delete'));
+          break;
+        case 'a':
+          if (e.metaKey) {
+            this.get('rois').map(roi => {
+              roi.set('selected', true);
+            });
+          };
+          break;
         default:
           return false;
       }
