@@ -244,27 +244,24 @@ export default Controller.extend({
         route.model.file.set('roi_count', data.length);
         route.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
         var i = data.length;
-        (function delayedLoop(i) { // need to delay successive imports to prevent crash
-          setTimeout(function () {
-            var roi = data[i-1];
-            progressBar.progress('increment', 1);
+        // ROI creation produces promises, which can lead to a crash when running
+        // too many concurrently. Using reduce can call them sequentially.
+        data.reduce(function(cur, roi) {
+          return cur.then(function() {
             roi.created = firebase.database.ServerValue.TIMESTAMP;
             roi.lastComputedPolygon = "";
             var newROI = route.get('store').createRecord('fb-roi', roi);
             route.model.firebaseWorkspace.get('rois').addObject(newROI);
-            newROI.save().then(result => {
+            return newROI.save().then(result => {
               var message = `ROI ${newROI.get('roi_id')} imported.`;
-              route.model.firebaseWorkspace.save();
+              return route.model.firebaseWorkspace.save().then(() => {
+                progressBar.progress('increment', 1);
+              });
             });
-            if (--i) {
-               delayedLoop(i);      //  decrement i and call myLoop again if i > 0
-             } else {
-              setTimeout(function() {
-                route.model.firebaseWorkspace.save(); // ensure all rois have been associated with workspace
-                modal.modal('hide'); }, 2000);
-             };
-          }, 10)
-        })(i);
+          });
+        }, Ember.RSVP.resolve()).then(function() {
+          setTimeout(function() { modal.modal('hide'); }, 2000);
+        });
       };
       fr.readAsText(dataFile);
     },

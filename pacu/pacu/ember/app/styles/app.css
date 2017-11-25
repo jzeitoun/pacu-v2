@@ -89,6 +89,10 @@ h2:first-child {
   color: #FFFFFF;
 }
 
+.success #progress-label {
+  color: #2cbb42;
+}
+
 /*.sbx
   .ui.sticky
     transition -webkit-filter 1s linear
