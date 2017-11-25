@@ -73,7 +73,7 @@ h2:first-child {
 }
 
 .progress-header {
-  color: #000000;
+/*  color: #4ebef3;*/
   margin: 0.5rem;
   position: relative;
   text-align: center;
@@ -82,6 +82,11 @@ h2:first-child {
 
 .ui.import-progress.modal {
   padding: 0.5rem;
+  background: transparent;
+}
+
+#progress-label {
+  color: #FFFFFF;
 }
 
 /*.sbx

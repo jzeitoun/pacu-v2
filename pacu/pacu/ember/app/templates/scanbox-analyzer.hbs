@@ -326,13 +326,13 @@
         </a>
         <input type="file" id="roi-import" style="display: none" onchange={{action "importJSONROIs" "import-progress"}}/>
 
-        {{#ui-modal name="import-progress" class="import-progress" closable=false}}
+        {{#ui-modal name="import-progress" class="import-progress inverted" closable=false}}
           <h2 class="progress-header">Importing ROIs</h2>
-          {{#ui-progress class="import-progress teal indicating progress"}}
+          {{#ui-progress class="import-progress teal inverted indicating progress"}}
             <div class="bar">
               <div class="progress"></div>
             </div>
-            <div class="label"></div>
+            <div id="progress-label" class="label"></div>
           {{/ui-progress}}
         {{/ui-modal}}
 

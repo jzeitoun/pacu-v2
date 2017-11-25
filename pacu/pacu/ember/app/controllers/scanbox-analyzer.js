@@ -262,7 +262,7 @@ export default Controller.extend({
              } else {
               setTimeout(function() { modal.modal('hide'); }, 2000);
              };
-           }, 1)
+           }, 10)
         })(i);
       };
       fr.readAsText(dataFile);
