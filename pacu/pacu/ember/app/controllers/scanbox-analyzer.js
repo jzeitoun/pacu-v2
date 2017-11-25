@@ -245,24 +245,25 @@ export default Controller.extend({
         route.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
         var i = data.length;
         (function delayedLoop(i) { // need to delay successive imports to prevent crash
-           setTimeout(function () {
-             var roi = data[i-1];
-             progressBar.progress('increment', 1);
-             roi.created = firebase.database.ServerValue.TIMESTAMP;
-             roi.lastComputedPolygon = "";
-             var newROI = route.get('store').createRecord('fb-roi', roi);
-             route.model.firebaseWorkspace.get('rois').addObject(newROI);
-             newROI.save().then(result => {
-               var message = `ROI ${newROI.get('roi_id')} imported.`;
-               route.model.firebaseWorkspace.save().then(result => {
-               });
-             });
-             if (--i) {
+          setTimeout(function () {
+            var roi = data[i-1];
+            progressBar.progress('increment', 1);
+            roi.created = firebase.database.ServerValue.TIMESTAMP;
+            roi.lastComputedPolygon = "";
+            var newROI = route.get('store').createRecord('fb-roi', roi);
+            route.model.firebaseWorkspace.get('rois').addObject(newROI);
+            newROI.save().then(result => {
+              var message = `ROI ${newROI.get('roi_id')} imported.`;
+              route.model.firebaseWorkspace.save();
+            });
+            if (--i) {
                delayedLoop(i);      //  decrement i and call myLoop again if i > 0
              } else {
-              setTimeout(function() { modal.modal('hide'); }, 2000);
+              setTimeout(function() {
+                route.model.firebaseWorkspace.save(); // ensure all rois have been associated with workspace
+                modal.modal('hide'); }, 2000);
              };
-           }, 10)
+          }, 10)
         })(i);
       };
       fr.readAsText(dataFile);
