@@ -1,0 +1,16 @@
+{{#if neuropilEnabled}}
+  {{x-layer/roi-manager-v2/roi/neuropil-polygon points=neuropilPoints}}
+{{/if}}
+{{x-layer/roi-manager-v2/roi/polygon
+  roi_id=roi_id
+  points=points
+  selected=selected
+  dragging=dragging
+  pointDrag=pointDrag
+  inProgress=inProgress
+  computed=computed}}
+{{x-layer/roi-manager-v2/roi/id
+  roi_id=roi_id
+  points=points
+  selected=selected
+  hover=hover}}

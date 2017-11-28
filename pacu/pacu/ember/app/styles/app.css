@@ -47,12 +47,15 @@ canvas#stream {
 .sci-analyses input {
   color: black;
 }
+
 .sci-analyses-open-session:hover {
   color: red;
 }
+
 .trj-analyses input {
   color: black;
 }
+
 .trjci-analyses-open-session:hover {
   color: red;
 }
@@ -183,15 +186,19 @@ polygon {
   stroke-opacity: 0;
 }
 
+polygon.neuropil {
+  fill-opacity: 0.35;
+}
+
 polygon.in-progress {
   fill: #FD9612;
 }
 
 polygon.computed {
-  fill: #8DF927; /* lime */
+  fill: #27ff00; /* lime */
 }
 
-polygon:hover {
+polygon:not(.neuropil):hover {
   stroke-opacity: 0.8;
   marker-start: url(#base-marker);
   marker-mid: url(#base-marker);
@@ -219,6 +226,40 @@ polygon.selected, polygon.dragging {
   position: relative;
 }
 
+.ui.checkbox input:checked ~ .box:after, .ui.checkbox input:checked ~ label:after {
+  color: #FFFFFF;
+}
+
+.ui.checkbox .box:after, .ui.checkbox label:after {
+  background: #3878b2;
+  color: #FFFFFF;
+}
+
+.ui.checkbox label#custom {
+  color: #FFFFFF;
+}
+
+.custom-li {
+  margin: 0.5rem 0rem;
+  list-style: none
+}
+
+.custom-li > label#custom{
+  padding: 1rem;
+}
+
+*.unselectable {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+
+   /*
+     Introduced in IE 10.
+     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+   */
+   -ms-user-select: none;
+   user-select: none;
+}
 
 /*.dot {
   stroke: transparent;

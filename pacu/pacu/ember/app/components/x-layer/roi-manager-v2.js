@@ -19,12 +19,9 @@ export default Ember.Component.extend({
   tagName: 'svg',
   classNameBindings: ['placeMode'],
   attributeBindings: ['height', 'width'],
-  height: null,
-  width: null,
-  placeMode: false,
-  added: false,
-  selectMode: false,
-  disableHandles: false,
+  neuropilChanged: Ember.observer('neuropilRatio', 'neuropilFactor', 'neuropilEnabled', function() {
+    this.get('updateNeuropil')();
+  }),
   selectRect: {
     origin: {
       x: null,
@@ -35,17 +32,8 @@ export default Ember.Component.extend({
     length: null,
     width: null,
   },
-  workspace: null,
-  file: null,
-  rois: null,
-  firebaseWorkspace: null,
-  curID: null,
-  activeID: null,
   activeROIChanged: Ember.observer('activeID', function() {
     var rois = this.get('rois');
-    //rois.map(function(roi) {
-    //  roi.set('selected', false);
-    //});
     var activeROI = rois.filterBy('roi_id', Number(this.get('activeID'))).get('firstObject');
     if (activeROI) {
       activeROI.set('selected', true);
@@ -79,8 +67,8 @@ export default Ember.Component.extend({
 
   actions: {
     triggerUpdate(roi_id) {
-      var ROI = this.get('rois').filterBy('roi_id', roi_id)[0];
-      this.get('update')(ROI);
+      var roi = this.get('rois').filterBy('roi_id', roi_id).get('firstObject');
+      this.get('update')(roi);
     },
 
     computeSelected() {
@@ -114,6 +102,8 @@ export default Ember.Component.extend({
           roi_id: this.get('curID'),
           polygon: this.get('roiPrototype.points')
         }, this.get('file'), this.get('firebaseWorkspace'));
+      return;
+    } else if (e.target.classList.contains('neuropil')) {
       return;
     };
 
@@ -176,7 +166,7 @@ export default Ember.Component.extend({
         roi.set('pointdrag', false);
         roi.set('targetPoint', null);
       });
-      if (e.target.tagName == 'polygon') {
+      if (e.target.tagName == 'polygon' && !e.target.classList.contains('neuropil')) {
         var clickedROI = this.get('rois').filterBy('roi_id', Number(e.target.dataset['roiId']))[0];
         clickedROI.set('selected', true);
         this.set('activeID', clickedROI.get('roi_id'));
@@ -245,6 +235,9 @@ export default Ember.Component.extend({
           break;
         case 'm':
           this.toggleProperty('placeMode');
+          break;
+        case 'n':
+          this.toggleProperty('neuropilEnabled');
           break;
         case 'd':
           this.toggleProperty('disableHandles');

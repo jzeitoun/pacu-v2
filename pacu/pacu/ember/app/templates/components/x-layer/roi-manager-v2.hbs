@@ -16,9 +16,12 @@
 {{/if}}
 
 {{#each rois as |roi|}}
-  {{x-layer/roi-manager-v2/polygon
+  {{x-layer/roi-manager-v2/roi
     roi_id=roi.roi_id
     points=roi.polygon
+    neuropilPoints=roi.neuropilPolygon
+    neuropilEnabled=neuropilEnabled
+    neuropilRatio=neuropilRatio
     lastComputedPoints=roi.lastComputedPolygon
     selected=roi.selected
     dragging=roi.dragging
@@ -27,10 +30,5 @@
     placeMode=placeMode
     disableHandles=disableHandles
     triggerUpdate=(action "triggerUpdate" roi.roi_id)
-    hover=roi.hover}}
-  {{x-layer/roi-manager-v2/polygon-id
-    roi_id=roi.roi_id
-    points=roi.polygon
-    selected=roi.selected
     hover=roi.hover}}
 {{/each}}

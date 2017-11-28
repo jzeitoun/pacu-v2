@@ -6,10 +6,7 @@ export default DS.Model.extend({
   workspace: DS.belongsTo('fb-workspace'), //DS.attr('string'),
   polygon: DS.attr('string'), // list of coordinate pairs
   lastComputedPolygon: DS.attr('string'),
-  neuropil_ratio: DS.attr('number', { defaultValue: 4.0 }),
-  neuropil_factor: DS.attr('number', { defaultValue: 0.7 }),
-  neuropil_polygon: DS.attr('string', { defaultValue: "" }),
-  neuropil_enabled: DS.attr('boolean', { defaultValue: false }),
+  neuropilPolygon: DS.attr('string', { defaultValue: '' }),
   hover: false,
   selected: false,
   dragging: false,

@@ -25,17 +25,9 @@ Date.prototype.toCustomString = function() {
 };
 
 export default Controller.extend({
-  init() {
-    this._super(...arguments);
-    this.set('selection', []);
-    this.set('importing', false);
-  },
+  selection: [],
   roiRecord: service(),
   actions: {
-    openModal(name) {
-      $('.ui.' + name + '.modal').modal('show');
-    },
-
     addROI(roi, file, workspace) {
       file.save(); // saving roi_count to file to maintain compatibility with sqlite structure
       var newROI = this.get('store').createRecord('fb-roi', roi);
@@ -80,8 +72,15 @@ export default Controller.extend({
       };
     },
 
+    saveNeuropilConfig() {
+      this.model.firebaseWorkspace.save();
+    },
+
+
     computeROIs(rois, workspace) {
-      var store = this.get('store');
+      this.toast.info('Running ROI computations...');
+      const store = this.get('store');
+      const model = this.model
       //var singleROIData = store.findRecord('roi-data', 1);
       var roiData = store.findAll('roi').then(result => {
         var roiDataObjects = result.toArray();
@@ -106,9 +105,16 @@ export default Controller.extend({
             var polygon = pointsToArray(roi.get('polygon')).map(function(point) {
               return {x:point[0], y:point[1]};
             });
+            var neuropilPolygon = pointsToArray(roi.get('neuropilPolygon')).map(function(point) {
+              return {x:point[0], y:point[1]};
+            });
             var newRecord = store.createRecord('roi', {
               polygon: polygon,
-              workspace: workspace
+              workspace: workspace,
+              neuropil_polygon: neuropilPolygon,
+              neuropil_enabled: model.firebaseWorkspace.get('neuropil_enabled'),
+              neuropil_ratio: model.firebaseWorkspace.get('neuropil_ratio'),
+              neuropil_factor: model.firebaseWorkspace.get('neuropil_factor')
             });
             // compute
             newRecord.save().then(() => {
@@ -119,11 +125,20 @@ export default Controller.extend({
           } else {
             // record exists, skip to compute
             var roiData = roiDataObjects.filterBy('id', String(roi.get('roi_id'))).get('firstObject');
-            // update coordinates
+            // update coordinates and neuropil configuration
             var polygon = pointsToArray(roi.get('polygon')).map(function(point) {
               return {x:point[0], y:point[1]};
             });
-            roiData.set('polygon', polygon);
+            var neuropilPolygon = pointsToArray(roi.get('neuropilPolygon')).map(function(point) {
+              return {x:point[0], y:point[1]};
+            });
+            roiData.setProperties({
+              'polygon': polygon,
+              'neuropil_polygon': neuropilPolygon,
+              'neuropil_enabled': model.firebaseWorkspace.get('neuropil_enabled'),
+              'neuropil_ratio': model.firebaseWorkspace.get('neuropil_ratio'),
+              'neuropil_factor': model.firebaseWorkspace.get('neuropil_factor')
+            });
             roiData.save();
             return store.createRecord('action', {
               model_name: 'ROI',
@@ -264,6 +279,16 @@ export default Controller.extend({
         });
       };
       fr.readAsText(dataFile);
+    },
+
+    createProjection() {
+      console.log('projection generated');
+      const stream = this.model.stream;
+      this.set('projBusy', true);
+      stream.invoke('ch0.generate_projections').finally(() => {
+        this.set('projBusy', false);
+        stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump',);
+      });
     },
 
     overlayProjection(type) {

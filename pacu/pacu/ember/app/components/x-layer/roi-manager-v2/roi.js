@@ -1,4 +1,8 @@
+import Component from '@ember/component';
 import Ember from 'ember';
+import { observer, computed } from '@ember/object';
+import { on } from "@ember/object/evented";
+import scalePoly from 'pacu-v2/utils/poly-scale';
 
 // filter array by mask
 Array.prototype.maskFilter = function(mask) {
@@ -12,27 +16,40 @@ function pointsToArray(strPoints) {
   });
 }
 
-export default Ember.Component.extend({
-  tagName: 'polygon',
-  classNameBindings: ['selected', 'dragging', 'pointdrag', 'inProgress', 'computed'],
-  attributeBindings: ['points','roi_id:data-roi-id'],
-  roi_id: null,
-  points: null,
-  lastComputedPoints: null,
-  hover: false,
-  selected: false,
-  dragging: false,
-  pointdrag: false,
-  inProgress: Ember.computed.equal('lastComputedPoints', 'inProgress'),
-  computed: Ember.computed('points','lastComputedPoints', function() {
+function getNeuropilPoints(strPoints, ratio) {
+  var points = pointsToArray(strPoints).map(function(point) { return { x: point[0], y: point[1] };
+  });
+  var neuropilPoints = scalePoly(points, ratio).map(function(point) {
+    return [Math.round(point.x), Math.round(point.y)].join()
+  }).join();
+  return neuropilPoints;
+}
+
+export default Component.extend({
+  tagName: 'svg',
+  inProgress: computed.equal('lastComputedPoints', 'inProgress'),
+  computed: computed('points','lastComputedPoints', function() {
     return (this.get('points') == this.get('lastComputedPoints')) && !this.get('inProgress') && !this.get('selected');
   }),
-  targetPoint: null,
-  placeMode: false,
-  disableHandles: false,
-  pointsChanged: Ember.observer('points', 'lastComputedPoints', function() {
+  neuropilChanged: Ember.observer('points', 'neuropilRatio', 'neuropilEnabled', function() {
+    var { points, neuropilRatio } = this.getProperties('points', 'neuropilRatio')
+    var neuropilPoints = getNeuropilPoints(points, neuropilRatio);
+    // necessary to ensure model is updated
+    Ember.run.schedule('actions', this, () => {
+      this.set('neuropilPoints', neuropilPoints);
+    });
+  }),
+  propertyChanged: observer('points', 'neuropilPoints', 'lastComputedPoints', function() {
+    // need to pass in neuropilPoints because setting this property via observer doesn't update model
     Ember.run.debounce(this, 'triggerUpdate', 500);
   }),
+
+  didInsertElement() {
+    // ensure neuropil is set on creation of roi
+    var { points, neuropilRatio } = this.getProperties('points', 'neuropilRatio')
+    var neuropilPoints = getNeuropilPoints(points, neuropilRatio);
+    this.set('neuropilPoints', neuropilPoints);
+  },
 
   mouseEnter(e) {
     this.set('hover', true);
@@ -43,14 +60,14 @@ export default Ember.Component.extend({
   },
 
   mouseDown(e) {
-    // if in placeMode, ignore mouseDown
-    if (this.get('placeMode')) {
+    // if in placeMode or clicking in neuropil, ignore mouseDown
+    if (this.get('placeMode') || e.target.classList.contains('neuropil')) {
       return;
     }
 
     // if handles are disabled, skip hit test
     if (!this.get('disableHandles')) {
-      var hitResult = this.hitTest(e, this.element);
+      var hitResult = this.hitTest(e, e.target);
     }
 
     // if pressing the metaKey while clicking in fill, select roi
@@ -145,7 +162,7 @@ export default Ember.Component.extend({
       var index = vertexPositions.indexOf(hitPosition);
       return {'type': 'strokeHit',
               'index': index};
-    }
+    };
 
     function checkPoint(event, point, tol) {
      // var offset = $('svg').select().offset();
@@ -173,8 +190,5 @@ export default Ember.Component.extend({
     function isClose(val, testVal, tol) {
         return testVal > val-tol && testVal < val+tol;
     }
-
   },
-
-
 });

@@ -3,11 +3,6 @@ import DS from 'ember-data';
 import { computed } from '@ember/object';
 import { inject as service } from '@ember/service';
 
-
-// TODO: setup imports for these functions
-//import { getCentroid } from 'pacu/pods/components/x-layer/roi/centroid';
-//import { outerPointsByRatio } from 'pacu/pods/components/x-layer/roi/neuropil';
-
 export default DS.Model.extend({
   toast: service(),
   didCreate() {

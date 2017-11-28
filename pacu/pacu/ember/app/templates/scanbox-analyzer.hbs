@@ -153,18 +153,20 @@
 
   {{! Main Canvas Slider }}
   <section class="ui clearing divider"></section>
-  <div class="ui">
-    {{input type="range" min="0" step="1"
-      max=stream.img.maxIndex value=stream.img.curIndex}}
-  </div>
+    <div class="ui flex-container">
+      <div class="left-label">Index: </div>
+      <div class="field-container">
+          {{input value=stream.img.curIndex class="cur-index"}}
+      </div>
+
+      <div id="main-slider">
+        {{input type="range" min="0" step="1"
+          max=stream.img.maxIndex value=stream.img.curIndex}}
+      </div>
+    </div>
 
   <section class="ui clearing divider"></section>
   <div class="flex-container"> {{!-- Start flex div --}}
-
-    <div class="left-label">Index: </div>
-    <div class="field-container">
-        {{input value=stream.img.curIndex class="cur-index"}}
-    </div>
 
     <div class="left-label">Active ROI: </div>
     <div class="field-container">
@@ -380,14 +382,24 @@
           compute=(action "computeROIs")
           updateTable=(action "updateTable")
           ensureWorkspace=(action "ensureWorkspace")
+          updateNeuropil=(action "saveNeuropilConfig")
           placeMode=placeMode
-          disableHandles=disableHandles}}
+          disableHandles=disableHandles
+          neuropilEnabled=model.firebaseWorkspace.neuropil_enabled
+          neuropilFactor=model.firebaseWorkspace.neuropil_factor
+          neuropilRatio=model.firebaseWorkspace.neuropil_ratio}}
 
       {{/x-layer}}
     {{/zoomable-container}}
 
     {{! ROI Control }}
     <div class="four wide column roi-list-container">
+      <h3>Neuropil Options</h3>
+      <li class="custom-li">{{#ui-checkbox id="custom" checked=model.firebaseWorkspace.neuropil_enabled onChange=(action (mut model.firebaseWorkspace.neuropil_enabled))}}
+        <label id="custom">Enable Neuropil Subtraction</label>
+      {{/ui-checkbox}}</li>
+      <li class="custom-li">{{input value=model.firebaseWorkspace.neuropil_factor class="contrast-field"}}<label id="custom">Neuropil Factor</label></li>
+      <li class="custom-li">{{input value=model.firebaseWorkspace.neuropil_ratio class="contrast-field"}}<label id="custom">Neuropil Ratio</label></li>
       <h3>Shortcuts</h3>
       <li>"m" :  <span class={{if placeMode "active-mode"}}>Place Mode</span></li>
       <li>"d" :  <span class={{if disableHandles "active-mode"}}>Disable Handles</span></li>
