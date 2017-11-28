@@ -190,6 +190,20 @@ export default Controller.extend({
           };
         };
       });
+
+      // for workspaces that do not have neuropil config, set defaults
+      var { neuropil_enabled, neuropil_factor, neuropil_ratio } = firebaseWorkspace.getProperties('neuropil_enabled', 'neuropil_factor', 'neuropil_ratio');
+      if (!neuropil_enabled || !neuropil_factor || !neuropil_ratio) {
+        firebaseWorkspace.setProperties(
+          {
+            'neuropil_enabled': false,
+            'neuropil_factor': 0.7,
+            'neuropil_ratio': 4.0
+          }
+        );
+        firebaseWorkspace.save();
+      };
+
       // ensure firebaseWorkspace reference exists in file
       file.get('workspaces').then(firebaseWorkspaces => {
         if (!firebaseWorkspaces.includes(firebaseWorkspace)) {
