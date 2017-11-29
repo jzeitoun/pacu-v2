@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.io as sio
+import scipy.io as scio
 import os
 
 from pacu.core.io.scanbox.view.trial_merged_roi import TrialMergedROIView
@@ -15,10 +15,9 @@ class Export(object):
         self.condition = condition
         self.flicker = any([trial['flicker'] for trial in self.condition.trial_list])
         self.blank = any([trial['blank'] for trial in self.condition.trial_list])
-        self.rois = rois
         self.ids = map(int, ids.split(','))
+        self.rois = rois
         self.roi_dict = {'{}{}'.format('cell_id_', roi.id) : roi.serialize() for roi in self.rois}
-        print self.ids
 
     def blank_responses(self, roi):
         if self.blank:
@@ -43,16 +42,17 @@ class Export(object):
         # providing filename and workspace name as list to maintain compatibility
         # with post analysis scripts
         ########################################
-        merged_dict['filenames'] = [self.io]
-        merged_dict['workspaces'] = [self.ws]
+        merged_dict['filenames'] = [str(self.io)]
+        merged_dict['workspaces'] = [str(self.ws)]
         ########################################
         merged_dict['rois'] = self.roi_dict
-        for roi in self.rois:
+        filtered_rois = [roi for roi in self.rois if roi.id in self.ids]
+        for roi in filtered_rois:
             #merged_dict['rois']['{}{}'.format('cell_id_', roi.params.cell_id)]['sorted_dtorientationsmeans'] = self.sorted_orientation_traces(roi)
             merged_dict['rois']['{}{}'.format('cell_id_', roi.id)]['blank_responses'] = self.blank_responses(roi)
             merged_dict['rois']['{}{}'.format('cell_id_', roi.id)]['flicker_responses'] = self.flicker_responses(roi)
         sio = StringIO()
-        sio.savemat(sio, {'merged_dict': merged_dict})
+        scio.savemat(sio, {'merged_dict': merged_dict})
         return sio.getvalue()
         #if filename == None:
         #    fname = self.fw_array[0][0][:-3] + '_merged.mat'

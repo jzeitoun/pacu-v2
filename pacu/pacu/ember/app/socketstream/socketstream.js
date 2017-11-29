@@ -14,7 +14,7 @@ const Image = EmberObject.extend({
   sump: false,
   buffer: null,
   curIndex: 0,
-  cmap: 'Jet', // added attribute (JZ)
+  cmap: 'Gray', // added attribute (JZ)
   max: 255, // added to control colormap contrast (JZ)
   min: 0, // added to control colormap contrast (JZ)
   maxp_max: 255, // added to control colormap contrast (JZ)
