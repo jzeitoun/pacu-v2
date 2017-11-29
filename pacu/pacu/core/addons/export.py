@@ -13,22 +13,30 @@ class Export(object):
         self.io = io
         self.ws = ws
         self.condition = condition
+        self.flicker = any([trial['flicker'] for trial in self.condition.trial_list])
+        self.blank = any([trial['blank'] for trial in self.condition.trial_list])
         self.rois = rois
         self.ids = map(int, ids.split(','))
         self.roi_dict = {'{}{}'.format('cell_id_', roi.id) : roi.serialize() for roi in self.rois}
         print self.ids
 
     def blank_responses(self, roi):
-        blank_responses = [trial.attributes['value']['on']
-                            for trial in roi.dttrialdff0s
-                            if trial.attributes['trial_blank'] == True]
-        return np.mean(blank_responses, 1)
+        if self.blank:
+            blank_responses = [trial.attributes['value']['on']
+                                for trial in roi.dttrialdff0s
+                                if trial.attributes['trial_blank'] == True]
+            return np.mean(blank_responses, 1)
+        else:
+            return []
 
     def flicker_responses(self, roi):
-        flicker_responses = [trial.attributes['value']['on']
-                            for trial in roi.dttrialdff0s
-                            if trial.attributes['trial_flicker'] == True]
-        return np.mean(flicker_responses, 1)
+        if self.flicker:
+            flicker_responses = [trial.attributes['value']['on']
+                                for trial in roi.dttrialdff0s
+                                if trial.attributes['trial_flicker'] == True]
+            return np.mean(flicker_responses, 1)
+        else:
+            return []
 
     def matlab(self):
         merged_dict = {}

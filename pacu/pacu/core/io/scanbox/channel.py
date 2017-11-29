@@ -15,8 +15,8 @@ autumn, winter, cool, Wistia, hot, PRGn, PuOr, RdGy, Spectral, coolwarm
 from pacu.core.io.util.colormap.distorted2 import DistortedColormap2
 
 colormaps = {
-    'Jet': jet,
     'Gray': gray,
+    'Jet': jet,
     'Viridis': viridis,
     'Plasma': plasma,
     'Inferno': inferno,
@@ -67,7 +67,7 @@ class ScanboxChannel(object):
         self.mmappath = self.path.join_suffixes('.mmap.npy')
         self.statpath = self.path.join_suffixes('.stat.npy')
         self.metapath = self.path.join_suffixes('.meta.json')
-        self.cmap = colormaps['Jet']
+        self.cmap = colormaps['Gray']
         self.min_val = 0
         self.max_val = 255
     def import_with_io(self, io):
