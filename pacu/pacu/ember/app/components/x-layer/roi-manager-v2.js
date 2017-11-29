@@ -166,7 +166,8 @@ export default Ember.Component.extend({
         roi.set('pointdrag', false);
         roi.set('targetPoint', null);
       });
-      if (e.target.tagName == 'polygon' && !e.target.classList.contains('neuropil')) {
+      // set active roi
+      if (e.target.tagName == 'polygon' && !e.target.classList.contains('neuropil') && !e.metaKey) {
         var clickedROI = this.get('rois').filterBy('roi_id', Number(e.target.dataset['roiId']))[0];
         clickedROI.set('selected', true);
         this.set('activeID', clickedROI.get('roi_id'));

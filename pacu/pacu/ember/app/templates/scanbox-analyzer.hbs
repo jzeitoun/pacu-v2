@@ -195,70 +195,6 @@
     {{! End }}
     </div>--}}
 
-    <div class="ui simple dropdown colormap {{if projBusy "disabled"}} item">
-      Z-Projection{{!-- {{if stream.ch0HasMaxp "✓" "✗"}}--}}
-      <i class="dropdown icon"></i>
-      <div class="menu">
-        <div class="item" {{action "createProjection"}}>Initialize</div>
-        {{#if stream.ch0HasMaxp}}
-        <div class="item">
-          <i class="dropdown icon"></i>
-          Max Projection
-          <div class="menu">
-            <div class="item" {{action "overlayProjection" "max"}}>Overlay</div>
-            <div class="item" {{action "exportProjection" "max"}}>Export as Tiff</div>
-          </div>
-        </div>
-        {{/if}}
-        {{#if stream.ch0HasMeanp}}
-        <div class="item">
-          <i class="dropdown icon"></i>
-          Mean Projection
-          <div class="menu">
-            <div class="item" {{action "overlayProjection" "mean"}}>Overlay</div>
-            <div class="item" {{action "exportProjection" "mean"}}>Export as Tiff</div>
-          </div>
-        </div>
-        {{/if}}
-        {{#if stream.ch0HasSump}}
-        <div class="item">
-          <i class="dropdown icon"></i>
-          Sum Projection
-            <div class="menu">
-              <div class="item" {{action "overlayProjection" "sum"}}>Overlay</div>
-              <div class="item" {{action "exportProjection" "sum"}}>Export as Tiff</div>
-            </div>
-        </div>
-        {{/if}}
-      </div>
-    </div>
-    {{! Added by (JZ)}}
-    <div class="ui simple dropdown colormap{{if maxpBusy "disabled"}} item">
-      Colormap
-      <i class="dropdown icon"></i>
-      <div class="menu">
-        <div class="item" {{action "setCmap" 'Jet'}}>Jet</div>
-        <div class="item" {{action "setCmap" 'Gray'}}>Gray</div>
-        <div class="item" {{action "setCmap" 'Viridis'}}>Viridis</div>
-        <div class="item" {{action "setCmap" 'Plasma'}}>Plasma</div>
-        <div class="item" {{action "setCmap" 'Inferno'}}>Inferno</div>
-        <div class="item" {{action "setCmap" 'Magma'}}>Magma</div>
-        <div class="item" {{action "setCmap" 'Bone'}}>Bone</div>
-        <div class="item" {{action "setCmap" 'Pink'}}>Pink</div>
-        <div class="item" {{action "setCmap" 'Spring'}}>Spring</div>
-        <div class="item" {{action "setCmap" 'Summer'}}>Summer</div>
-        <div class="item" {{action "setCmap" 'Autumn'}}>Autumn</div>
-        <div class="item" {{action "setCmap" 'Winter'}}>Winter</div>
-        <div class="item" {{action "setCmap" 'Cool'}}>Cool</div>
-        <div class="item" {{action "setCmap" 'Hot'}}>Hot</div>
-        <div class="item" {{action "setCmap" 'Wistia'}}>Wistia</div>
-        <div class="item" {{action "setCmap" 'Purple-Green'}}>Purple-Green</div>
-        <div class="item" {{action "setCmap" 'Purple-Orange'}}>Purple-Orange</div>
-        <div class="item" {{action "setCmap" 'Red-Gray'}}>Red-Gray</div>
-        <div class="item" {{action "setCmap" 'Spectral'}}>Spectral</div>
-        <div class="item" {{action "setCmap" 'Cool-Warm'}}>Cool-Warm</div>
-      </div>
-    </div>
     <div class="contrast">
       <div class="left-label">Min: </div>
       <div class="min">
@@ -318,7 +254,73 @@
           {{/if}}
         </div>
       </div>
+
       <div id="compute-button" class="ui small compact inverted icon bottom menu field-container">
+        <a class="ui dropdown {{if projBusy "disabled"}} item">
+          Colormap
+          <i class="dropdown icon"></i>
+          <div class="menu">
+            <span class="item" {{action "setCmap" 'Jet'}}>Jet</span>
+            <span class="item" {{action "setCmap" 'Gray'}}>Gray</span>
+            <span class="item" {{action "setCmap" 'Viridis'}}>Viridis</span>
+            <span class="item" {{action "setCmap" 'Plasma'}}>Plasma</span>
+            <span class="item" {{action "setCmap" 'Inferno'}}>Inferno</span>
+            <span class="item" {{action "setCmap" 'Magma'}}>Magma</span>
+            <span class="item" {{action "setCmap" 'Bone'}}>Bone</span>
+            <span class="item" {{action "setCmap" 'Pink'}}>Pink</span>
+            <span class="item" {{action "setCmap" 'Spring'}}>Spring</span>
+            <span class="item" {{action "setCmap" 'Summer'}}>Summer</span>
+            <span class="item" {{action "setCmap" 'Autumn'}}>Autumn</span>
+            <span class="item" {{action "setCmap" 'Winter'}}>Winter</span>
+            <span class="item" {{action "setCmap" 'Cool'}}>Cool</span>
+            <span class="item" {{action "setCmap" 'Hot'}}>Hot</span>
+            <span class="item" {{action "setCmap" 'Wistia'}}>Wistia</span>
+            <span class="item" {{action "setCmap" 'Purple-Green'}}>Purple-Green</span>
+            <span class="item" {{action "setCmap" 'Purple-Orange'}}>Purple-Orange</span>
+            <span class="item" {{action "setCmap" 'Red-Gray'}}>Red-Gray</span>
+            <span class="item" {{action "setCmap" 'Spectral'}}>Spectral</span>
+            <span class="item" {{action "setCmap" 'Cool-Warm'}}>Cool-Warm</span>
+          </div>
+        </a>
+
+        <a class="ui dropdown {{if projBusy "disabled"}} item">
+          Z-Projection{{!-- {{if stream.ch0HasMaxp "✓" "✗"}}--}}
+          <i class="dropdown icon"></i>
+          <div class="menu">
+            <div class="item" {{action "createProjection"}}>Initialize</div>
+            {{#if stream.ch0HasMaxp}}
+            <div class="item">
+              <i class="dropdown icon"></i>
+              Max Projection
+              <div class="menu">
+                <div class="item" {{action "overlayProjection" "max"}}>Overlay</div>
+                <div class="item" {{action "exportProjection" "max"}}>Export as Tiff</div>
+              </div>
+            </div>
+            {{/if}}
+            {{#if stream.ch0HasMeanp}}
+            <div class="item">
+              <i class="dropdown icon"></i>
+              Mean Projection
+              <div class="menu">
+                <div class="item" {{action "overlayProjection" "mean"}}>Overlay</div>
+                <div class="item" {{action "exportProjection" "mean"}}>Export as Tiff</div>
+              </div>
+            </div>
+            {{/if}}
+            {{#if stream.ch0HasSump}}
+            <div class="item">
+              <i class="dropdown icon"></i>
+              Sum Projection
+                <div class="menu">
+                  <div class="item" {{action "overlayProjection" "sum"}}>Overlay</div>
+                  <div class="item" {{action "exportProjection" "sum"}}>Export as Tiff</div>
+                </div>
+            </div>
+            {{/if}}
+          </div>
+        </a>
+
         <a class="item" {{action "computeROIs" model.firebaseWorkspace.rois model.workspace}}>
           Compute All
         </a>
