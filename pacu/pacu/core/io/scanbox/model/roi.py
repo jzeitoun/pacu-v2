@@ -2,6 +2,7 @@ import base64
 import operator
 import cStringIO
 from collections import OrderedDict
+from datetime import datetime
 
 import cv2
 import numpy as np
@@ -16,6 +17,22 @@ from pacu.core.io.scanbox.model.variant.roi import VTROIParams
 
 origet = operator.attrgetter('ori')
 TRIAL_ATTRS = 'on_time off_time ori sf tf contrast sequence order ran flicker blank'.split()
+
+def serialize(o):
+    if isinstance(o, dict):
+        return {str(key): serialize(val) for key, val in o.items() if val is not None}
+    elif isinstance(o, (list, tuple)):
+        return [serialize(item) for item in o]
+    elif hasattr(o, 'toDict'):
+        return serialize(o.toDict())
+    elif hasattr(o, '__dict__'):
+        return serialize(vars(o))
+    elif isinstance(o, unicode):
+        return str(o)
+    elif isinstance(o, datetime):
+        return str(o)
+    else:
+        return o
 
 class ROI(SQLite3Base):
     __tablename__ = 'rois'
@@ -159,6 +176,8 @@ class ROI(SQLite3Base):
         value = self.dtsfreqfits.filter_by(trial_contrast=contrast).first.value
         io.savemat(sio, value)
         return sio.getvalue()
+    def serialize(self):
+        return serialize(self)
 
 
 

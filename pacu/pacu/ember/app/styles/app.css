@@ -164,9 +164,21 @@ input.visual.option
   stroke-width: 1.5px;
 }
 
-marker#base-marker {
-  fill: #FFFFFF;
-  fill-opacity: 0.8;
+marker#default {
+  fill: #fbd104; /* yellow */
+  fill-opacity: 1;
+}
+
+marker#in-progress {
+  fill: #FD9612; /* orange */
+}
+
+marker#computed {
+  fill: #27ff00; /* lime */
+}
+
+marker#selected-dragging {
+  fill: #F02C15; /* red */
 }
 
 rect {
@@ -180,40 +192,64 @@ rect {
 polygon {
   /* fill: #8DF927; /* lime */
   fill: #880595; /* purple */
-  fill-opacity: 0.65;
-  stroke: #FFFFFF;
+  fill-opacity: 0 !important;
+  /*stroke: #FFFFFF; */
+  stroke: #fbd104; /* yellow */
   stroke-width: 0.8;
-  stroke-opacity: 0;
+  stroke-opacity: 1.0;
 }
 
 polygon.neuropil {
-  fill-opacity: 0.35;
+  fill-opacity: 0 !important;
+  /*stroke-opacity: 0; */
+  stroke-dasharray: 3;
 }
 
-polygon.in-progress {
-  fill: #FD9612;
+polygon.in-progress, polygon.neuropil.in-progress {
+  /*fill: #FD9612; /* orange */
+  stroke: #FD9612; /* orange */
 }
 
-polygon.computed {
-  fill: #27ff00; /* lime */
-}
-
-polygon:not(.neuropil):hover {
-  stroke-opacity: 0.8;
-  marker-start: url(#base-marker);
-  marker-mid: url(#base-marker);
+polygon.computed, polygon.neuropil.computed {
+  /*fill: #27ff00; /* lime */
+  stroke: #27ff00; /* lime */
 }
 
 polygon.prototype, .pointdrag {
   stroke-opacity: 0.8;
-  marker-start: url(#base-marker);
-  marker-mid: url(#base-marker);
+  marker-start: url(#default);
+  marker-mid: url(#default);
 }
 
-polygon.selected, polygon.dragging {
-  fill: #F02C15;
-  fill-opacity: 0.6;
+polygon:not(.neuropil):hover {
   stroke-opacity: 0.8;
+  marker-start: url(#default);
+  marker-mid: url(#default);
+}
+
+polygon.in-progress:not(.neuropil):hover {
+  stroke-opacity: 0.8;
+  marker-start: url(#in-progress);
+  marker-mid: url(#in-progress);
+}
+
+polygon.computed:not(.neuropil):hover {
+  stroke-opacity: 0.8;
+  marker-start: url(#computed);
+  marker-mid: url(#computed);
+}
+
+polygon.selected:not(.neuropil):hover, polygon.dragging:not(.neuropil):hover {
+  stroke-opacity: 0.8;
+  marker-start: url(#selected-dragging);
+  marker-mid: url(#selected-dragging);
+}
+
+polygon.selected, polygon.dragging, polygon.neuropil.selected, polygon.neuropil.dragging {
+  /*fill: #F02C15;
+  fill-opacity: 0.6;
+  stroke-opacity: 0.8;*/
+  stroke: #F02C15; /* red */
 }
 
 .visible-id {

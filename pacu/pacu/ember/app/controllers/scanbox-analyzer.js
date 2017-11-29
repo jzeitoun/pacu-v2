@@ -229,6 +229,21 @@ export default Controller.extend({
       }).catch(reason => { debugger; });
     },
 
+    exportMatlab() {
+      var computedROIs = this.get('roiRecord').get('computed');
+      const {io, ws} = this.model.name;
+      const fname = io.split('.')[0];
+      const ids = [];
+      for (var i=0; i<computedROIs.length; i++) {
+        ids.push(computedROIs[i].get('roi_id'));
+      }
+      this.toast.info(`Exporting data as Matlab structure...`);
+      this.model.stream.invokeAsBinary('export_matlab', ids.join(), ws).then(data => {
+        const ts = (new Date).toCustomString();
+        download.fromArrayBuffer(data, `${fname}-${ws}-${ts}.mat`, 'application/json');
+      }).catch(reason => { debugger; });
+    },
+
     exportJSONROIs() {
       var rois = this.get('roiRecord').get('all');
       const {io, ws} = this.model.name;

@@ -251,7 +251,7 @@ export default Ember.Component.extend({
           this.get('selectedROIs').map(this.get('delete'));
           break;
         case 'a':
-          if (e.metaKey) {
+          if (e.metaKey || e.ctrlKey) {
             this.get('rois').map(roi => {
               roi.set('selected', true);
             });

@@ -9,77 +9,50 @@ from openpyxl import Workbook
 from openpyxl.styles import NamedStyle, PatternFill, Border, Side, Alignment, Protection, Font
 
 class Export(object):
-    '''
-    Create this object in directory that contains the .io files of interest.
-    Argument should be list of tuples with the filename first and the workspace name second.
-    Example: stitched_dataset = stitched_data([('Day1_000_000','Workspace_1'),('Day1_000_001',Workspace_1')])
-    '''
-    def __init__(self, condition, ids, rois): #, fw_array):
-        #self.fw_array = fw_array
-        #self.path = os.getcwd()
-        #self.io = [ScanboxIO(os.path.join(self.path,fw[0])) for fw in self.fw_array]
-        #self.io = io
-        #self.wsName = wsName
+    def __init__(self, io, ws, condition, ids, rois):
+        self.io = io
+        self.ws = ws
         self.condition = condition
         self.rois = rois
         self.ids = map(int, ids.split(','))
-        print(self.ids)
-        #self.active_workspace = io.condition.workspaces.filter_by(name = self.wsName)[0]
-        #self.condition = self.io.condition
-        #self.workspaces = [workspace for data,fw in zip(self.io, self.fw_array) for workspace in data.condition.workspaces if workspace.name == fw[1]]
-        #self.workspaces = self.io.workspaces
-        #self.rois = self.find_matched_rois()
-        #self.merged_rois = [TrialMergedROIView(roi.params.cell_id,*self.workspaces) for roi in self.rois[0]]
-        #self.refresh_all() # no need to refresh unless stitching the data
-        #self.roi_dict = {'{}{}'.format('cell_id_',merged_roi.rois[0].params.cell_id):merged_roi.serialize() for merged_roi in self.merged_rois}
+        self.roi_dict = {'{}{}'.format('cell_id_', roi.id) : roi.serialize() for roi in self.rois}
+        print self.ids
 
-    def find_matched_rois(self):
-        rois = [workspace.rois for data, fw in zip(self.io, self.fw_array) for workspace in data.condition.workspaces if workspace.name == fw[1]]
-        id_sets = [[roi.params.cell_id for roi in roi_list] for roi_list in rois]
-        list_lengths = [len(s) for s in id_sets]
-        shortest_idx = list_lengths.index(min(list_lengths))
-        shortest_set = id_sets.pop(shortest_idx)
-        matched_ids = set(shortest_set).intersection(*id_sets)
-        matched_rois = [[roi for roi in roi_list if roi.params.cell_id in matched_ids] for roi_list in rois]
-        return matched_rois
-
-    def refresh_all(self):
-        for merged_roi in self.merged_rois:
-            merged_roi.refresh()
-
-    def sorted_orientation_traces(self, merged_roi):
-        sorted_orientation_traces = {str(roi.workspace.name):{} for roi in merged_roi.rois}
-        for k in sorted_orientation_traces.keys():
-            sorted_orientation_traces[k] = [dict(dtorientationsmean.attributes.items()[i] for i in [8,17]) for roi in merged_roi.rois for dtorientationsmean in roi.dtorientationsmeans if roi.workspace.name == k]
-        return sorted_orientation_traces
-
-    def blank_responses(self, merged_roi):
+    def blank_responses(self, roi):
         blank_responses = [trial.attributes['value']['on']
-                            for trial in merged_roi.dff0s
+                            for trial in roi.dttrialdff0s
                             if trial.attributes['trial_blank'] == True]
         return np.mean(blank_responses, 1)
 
-    def flicker_responses(self, merged_roi):
+    def flicker_responses(self, roi):
         flicker_responses = [trial.attributes['value']['on']
-                            for trial in merged_roi.dff0s
+                            for trial in roi.dttrialdff0s
                             if trial.attributes['trial_flicker'] == True]
         return np.mean(flicker_responses, 1)
 
-    def export_mat(self,filename=None,p_value=.01,unmerge=0):
+    def matlab(self):
         merged_dict = {}
-        merged_dict['filenames'] = [fw[0][:-3] for fw in self.fw_array]
-        merged_dict['workspaces'] = [workspace.name for workspace in self.workspaces]
+        # providing filename and workspace name as list to maintain compatibility
+        # with post analysis scripts
+        ########################################
+        merged_dict['filenames'] = [self.io]
+        merged_dict['workspaces'] = [self.ws]
+        ########################################
         merged_dict['rois'] = self.roi_dict
-        for merged_roi in self.merged_rois:
-            merged_dict['rois']['{}{}'.format('cell_id_',merged_roi.rois[0].params.cell_id)]['sorted_dtorientationsmeans'] = self.sorted_orientation_traces(merged_roi)
-            merged_dict['rois']['{}{}'.format('cell_id_',merged_roi.rois[0].params.cell_id)]['blank_responses'] = self.blank_responses(merged_roi)
-            merged_dict['rois']['{}{}'.format('cell_id_',merged_roi.rois[0].params.cell_id)]['flicker_responses'] = self.flicker_responses(merged_roi)
-        if filename == None:
-            fname = self.fw_array[0][0][:-3] + '_merged.mat'
-        else:
-            fname = filename + '.mat'
-        # save .mat file
-        sio.savemat(fname,{'merged_dict':merged_dict})
+        for roi in self.rois:
+            #merged_dict['rois']['{}{}'.format('cell_id_', roi.params.cell_id)]['sorted_dtorientationsmeans'] = self.sorted_orientation_traces(roi)
+            merged_dict['rois']['{}{}'.format('cell_id_', roi.id)]['blank_responses'] = self.blank_responses(roi)
+            merged_dict['rois']['{}{}'.format('cell_id_', roi.id)]['flicker_responses'] = self.flicker_responses(roi)
+        sio = StringIO()
+        sio.savemat(sio, {'merged_dict': merged_dict})
+        return sio.getvalue()
+        #if filename == None:
+        #    fname = self.fw_array[0][0][:-3] + '_merged.mat'
+        #else:
+        #    fname = filename + '.mat'
+        ## save .mat file
+        #sio.savemat(fname,{'merged_dict':merged_dict})
+
 
     def excel(self, p_value=0.01, unmerge=0):
         # export data as .xlsx
@@ -87,7 +60,6 @@ class Export(object):
         ws = wb.active
 
         filtered_rois = [roi for roi in self.rois if roi.id in self.ids]
-        #num_rois = len(self.rois)
         num_rois = len(filtered_rois)
         sfreqs = self.condition.sfrequencies #attributes['sfrequencies']
         num_sf = len(sfreqs)
@@ -202,7 +174,7 @@ class Export(object):
                 for top,bottom in zip(ws['A{}:I{}'.format(idx, idx)][0], ws['A{}:I{}'.format(idx+num_sf-1, idx+num_sf-1)][0]):
                     ws.merge_cells('{}{}:{}{}'.format(top.column, top.row, bottom.column, bottom.row))
 
-                ws.cell(row=idx,column=1).value = int(roi.params.cell_id)
+                ws.cell(row=idx,column=1).value = int(roi.id)
                 ws.cell(row=idx,column=1).style = style
                 ws.cell(row=idx,column=2).value = roi.dtanovaalls.first.attributes['value']['f']
                 ws.cell(row=idx,column=2).style = style
@@ -228,7 +200,7 @@ class Export(object):
 
             elif unmerge == 1:
                 for i in range(num_sf):
-                    ws.cell(row=idx+i,column=1).value = int(roi.params.cell_id)
+                    ws.cell(row=idx+i,column=1).value = int(roi.id)
                     ws.cell(row=idx+i,column=1).style = style
                     ws.cell(row=idx+i,column=2).value = roi.dtanovaalls.first.attributes['value']['f']
                     ws.cell(row=idx+i,column=2).style = style
