@@ -310,13 +310,19 @@ export default Controller.extend({
       fr.readAsText(dataFile);
     },
 
-    createProjection() {
-      console.log('projection generated');
+    showProjection(name) {
+      var maxIndex = this.model.stream.get('img.maxIndex');
+      this.setProperties({'start': 0, 'end': maxIndex});
+      const modal = $('.ui.' + name + '.modal');
+      modal.modal('show');
+    },
+
+    createProjection(start, end) {
       const stream = this.model.stream;
       this.set('projBusy', true);
-      stream.invoke('ch0.generate_projections').finally(() => {
+      stream.invoke('ch0.generate_projections', start, end).finally(() => {
         this.set('projBusy', false);
-        stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump',);
+        stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump');
       });
     },
 

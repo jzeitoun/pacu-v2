@@ -222,16 +222,20 @@ class ScanboxChannel(object):
     #        image = np.maximum(image, frame)
     #    np.save(self.maxppath.str, image)
     #    print 'done!'
-    def generate_projections(self):
-        print 'Generating max, mean, and sum projection images...'
+    def generate_projections(self, start, end):
+        start = int(start)
+        end = int(end)
         chan = self.mmap
-        depth = len(chan)
-        max_image = np.zeros_like(chan[0])
-        sum_image = np.zeros(chan[0].shape, dtype='float64')
-        mean_image = chan[0].astype('float64')
+        chan = chan[start:end+1]
+        depth = end - start
+        print 'Generating projections using indices {} - {}, total frames: {}.'.format(start, end, depth)
+        #depth = len(chan)
+        max_image = np.zeros_like(chan[start])
+        sum_image = np.zeros(chan[start].shape, dtype='float64')
+        mean_image = chan[start].astype('float64')
         p = psutil.Process()
         for i, frame in enumerate(chan):
-            if (i % 500) == 0:
+            if (i % 200) == 0:
                 mem_pct = p.memory_percent()
                 if mem_pct > 75:
                     raise MemoryError('Too much memory used. Aborting process.')
@@ -244,7 +248,7 @@ class ScanboxChannel(object):
                 img_weight = 1.0/idx
                 total_weight = (idx - 1.0)/idx
                 mean_image = mean_image*total_weight + frame*img_weight
-        sum_image = ((2**16-1) * (sum_image/np.max(sum_image))).astype('uint16')
+        sum_image = ((2**16-1) * (sum_image/(1.2*np.max(sum_image)))).astype('uint16')
         mean_image = mean_image.astype('uint16')
         np.save(self.maxppath.str, max_image)
         np.save(self.meanppath.str, mean_image)
