@@ -318,8 +318,12 @@ export default Controller.extend({
     },
 
     createProjection(start, end) {
+      const modal = $('.ui.projection-prompt.modal');
+      var numFrames = Number(end) - Number(start);
       const stream = this.model.stream;
       this.set('projBusy', true);
+      modal.modal('hide');
+      this.get('toast').info(`Generating projections with index range ${start} - ${end}. Total frames: ${numFrames}.`)
       stream.invoke('ch0.generate_projections', start, end).finally(() => {
         this.set('projBusy', false);
         stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump');
