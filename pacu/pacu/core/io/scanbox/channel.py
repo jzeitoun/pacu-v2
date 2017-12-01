@@ -196,13 +196,13 @@ class ScanboxChannel(object):
         value = io.getvalue()
         io.close()
         return value
-    @memoized_property
+    @property
     def maxp(self):
         return np.load(self.maxppath.str) if self.maxppath.is_file() else None
-    @memoized_property
+    @property
     def meanp(self):
         return np.load(self.meanppath.str) if self.meanppath.is_file() else None
-    @memoized_property
+    @property
     def sump(self):
         return np.load(self.sumppath.str) if self.sumppath.is_file() else None
     #@maxp.invalidator
@@ -228,7 +228,6 @@ class ScanboxChannel(object):
         chan = self.mmap
         chan = chan[start:end+1]
         depth = end - start
-        print 'Generating projections using indices {} - {}, total frames: {}.'.format(start, end, depth)
         #depth = len(chan)
         max_image = np.zeros_like(chan[start])
         sum_image = np.zeros(chan[start].shape, dtype='float64')
