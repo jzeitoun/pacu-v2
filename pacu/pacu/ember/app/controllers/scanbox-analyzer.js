@@ -118,7 +118,7 @@ export default Controller.extend({
             });
             // compute
             newRecord.save().then(() => {
-              newRecord.refreshAll().then(() => {
+              newRecord.refreshAll().then(result => {
                 roi.set('lastComputedPolygon', roi.get('polygon'));
               });
             });
@@ -148,12 +148,14 @@ export default Controller.extend({
               if (action.get('status_code') === 500) {
                 //console.log(`ROI ${roiData.id} returned an error.`);
                 //this.get('toast').error(action.get('status_text'));
+                roi.set('lastComputedPolygon', '');
+                roi.save();
               } else {
                 //console.log(`Finished computing ${roiData.id}`)
+                roi.set('lastComputedPolygon', roi.get('polygon'));
+                roi.save();
               };
             }).finally(() => {
-              roi.set('lastComputedPolygon', roi.get('polygon'));
-              roi.save();
             });
           }
         });

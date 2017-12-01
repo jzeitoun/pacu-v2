@@ -244,6 +244,12 @@ export default Ember.Component.extend({
           this.toggleProperty('disableHandles');
           var disableHandles = this.get('disableHandles');
           break;
+        case ',':
+          this.decrementProperty('curIndex');
+          break;
+        case '.':
+          this.incrementProperty('curIndex');
+          break;
         case 'Delete':
           this.get('selectedROIs').map(this.get('delete'));
           break;

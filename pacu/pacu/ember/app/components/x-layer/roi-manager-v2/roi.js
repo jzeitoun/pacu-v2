@@ -28,7 +28,7 @@ function getNeuropilPoints(strPoints, ratio) {
 export default Component.extend({
   tagName: 'svg',
   inProgress: computed.equal('lastComputedPoints', 'inProgress'),
-  computed: computed('points','lastComputedPoints', function() {
+  computed: computed('points','lastComputedPoints', 'selected', function() {
     return (this.get('points') == this.get('lastComputedPoints')) && !this.get('inProgress') && !this.get('selected');
   }),
   neuropilChanged: Ember.observer('points', 'neuropilRatio', 'neuropilEnabled', function() {
