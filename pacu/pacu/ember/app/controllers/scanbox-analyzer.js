@@ -44,8 +44,6 @@ export default Controller.extend({
     },
 
     addROI(roi, file, workspace) {
-      const roiRecord = this.get('roiRecord');
-      debugger;
       file.save(); // saving roi_count to file to maintain compatibility with sqlite structure
       var newROI = this.get('store').createRecord('fb-roi', roi);
       workspace.get('rois').addObject(newROI);
@@ -61,14 +59,6 @@ export default Controller.extend({
     deleteROI(roi) {
       roi.deleteRecord();
       roi.save()
-    },
-
-    deselectAll() {
-      const roiRecord = this.get('roiRecord');
-      var rois = roiRecord.get('all').filterBy('selected', true);
-      rois.map(function(roi) {
-        roi.set('selected', false);
-      });
     },
 
     updateTable(selectedROIs) {
@@ -93,28 +83,35 @@ export default Controller.extend({
       this.model.firebaseWorkspace.save();
     },
 
-    computeROIs(rois, workspace) {
-      this.toast.info('Running ROI computations...');
+
+    computeSelected() {
+      this.toast.info('Computing selected ROIs...');
+      var selectedROIs = this.get('roiRecord.selected');
+      this.send('computeROIs', selectedROIs);
+    },
+
+    computeUncomputed() {
+      this.toast.info('Computing any uncomputed ROIs...');
+      var uncomputedROIs = this.get('roiRecord.uncomputed');
+      this.send('computeROIs', uncomputedROIs);
+    },
+
+    computeROIs(rois) {
       const store = this.get('store');
       const model = this.model
-      //var singleROIData = store.findRecord('roi-data', 1);
+      const workspace = this.model.firebaseWorkspace;
       var roiData = store.findAll('roi').then(result => {
         var roiDataObjects = result.toArray();
         var existingIDs = roiDataObjects.map(function(roi) {
           return Number(roi.id);
         });
         rois.forEach(function(roi) {
-          if (!(roi.get('polygon') == roi.get('lastComputedPolygon'))) {
-            roi.set('lastComputedPolygon', 'inProgress');
-            roi.save();
-          };
+          roi.set('lastComputedPolygon', 'inProgress');
+          roi.save();
         });
         // compute rois sequentially
         rois.reduce(function(cur, roi) {
           return cur.then(function() {
-            if (roi.get('polygon') == roi.get('lastComputedPolygon')) {
-              return;
-            };
             // create sqlite record if none exists
             if (!existingIDs.includes(roi.get('roi_id'))) {
               //console.log(existingIDs);

@@ -44,9 +44,15 @@ export default Ember.Component.extend({
       console.log('active ID changed');
     }
   }),
-  selectedROIs: computed(function() { return this.get('roiRecord.selected'); }),
-  computedROIs: computed(function() { return this.get('roiRecord.computed'); }),
-  uncomputedROIs: computed(function() { return this.get('roiRecord.uncomputed'); }),
+  selectedROIs: computed('roiRecord.selected', function() {
+    return this.get('roiRecord.selected');
+  }),
+  computedROIs: computed('roiRecord.computed', function() {
+    return this.get('roiRecord.computed');
+  }),
+  uncomputedROIs: computed('roiRecord.uncomputed', function() {
+    return this.get('roiRecord.uncomputed');
+  }),
   //selectedROIs: Ember.computed.filterBy('rois', 'selected', true),
   //computedROIs: Ember.computed.filterBy('rois', 'computed', true),
   //uncomputedROIs: Ember.computed.filterBy('rois', 'computed', false),
@@ -76,18 +82,6 @@ export default Ember.Component.extend({
       var roi = this.get('rois').filterBy('roi_id', roi_id).get('firstObject');
       this.get('update')(roi);
     },
-
-    computeSelected() {
-      this.get('compute')(this.get('selectedROIs'));
-    },
-
-    computeUncomputed() {
-      this.get('compute')(this.get('uncomputedROIs'));
-    },
-
-    computeAll() {
-      this.get('compute')(this.get('rois'));
-    }
   },
 
   didInsertElement() {

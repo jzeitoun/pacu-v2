@@ -323,8 +323,13 @@
           </div>
         </a>
 
-        <a class="item" {{action "computeROIs" model.firebaseWorkspace.rois model.workspace}}>
-          Compute All
+        <a class="ui dropdown item">
+          Compute
+          <i class="dropdown icon"></i>
+          <div class="menu">
+            <span class="item" {{action "computeSelected"}}>Selected</span>
+            <span class="item" {{action "computeUncomputed"}}>Uncomputed</span>
+          </div>
         </a>
 
         <a class="item" {{action "loadJSONROIs"}}>
@@ -417,7 +422,8 @@
           add=(action "addROI")
           update=(action "updateROI")
           delete=(action "deleteROI")
-          compute=(action "computeROIs")
+          computeUncomputed=(action "computeUncomputed")
+          computeSelected=(action "computeSelected")
           updateTable=(action "updateTable")
           ensureWorkspace=(action "ensureWorkspace")
           updateNeuropil=(action "saveNeuropilConfig")
