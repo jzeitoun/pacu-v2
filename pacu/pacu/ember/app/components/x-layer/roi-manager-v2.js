@@ -1,4 +1,6 @@
 import Ember from 'ember';
+import { inject as service } from '@ember/service';
+import { computed } from '@ember/object';
 import firebase from 'firebase';
 
 // filter array by mask
@@ -14,8 +16,9 @@ function pointsToArray(strPoints) {
 }
 
 export default Ember.Component.extend({
-  store: Ember.inject.service(),
-  roiRecord: Ember.inject.service(),
+  roiRecord: service(),
+  toast: service(),
+  firebase: firebase,
   tagName: 'svg',
   classNameBindings: ['placeMode'],
   attributeBindings: ['height', 'width'],
@@ -41,9 +44,12 @@ export default Ember.Component.extend({
       console.log('active ID changed');
     }
   }),
-  selectedROIs: Ember.computed.filterBy('rois', 'selected', true),
-  computedROIs: Ember.computed.filterBy('rois', 'computed', true),
-  uncomputedROIs: Ember.computed.filterBy('rois', 'computed', false),
+  selectedROIs: computed(function() { return this.get('roiRecord.selected'); }),
+  computedROIs: computed(function() { return this.get('roiRecord.computed'); }),
+  uncomputedROIs: computed(function() { return this.get('roiRecord.uncomputed'); }),
+  //selectedROIs: Ember.computed.filterBy('rois', 'selected', true),
+  //computedROIs: Ember.computed.filterBy('rois', 'computed', true),
+  //uncomputedROIs: Ember.computed.filterBy('rois', 'computed', false),
   draggedROIs: Ember.computed.filterBy('rois', 'dragging', true),
   targetedROI: Ember.computed.filter('rois.@each.targetPoint', function(roi, index, array) {
     return typeof(roi.get('targetPoint')) == "number";
@@ -85,6 +91,8 @@ export default Ember.Component.extend({
   },
 
   didInsertElement() {
+    // setup firebase connection monitor
+    this.get('initializeDbMonitor')();
     // use service to keep a record of roi states
     this.get('roiRecord').set('all', this.get('rois'));
     // ensure workspace is linked to file

@@ -81,6 +81,15 @@ input[type="search"] {
   display: flex;
 }
 
+.flex-container.menu {
+  flex-wrap: wrap;
+  width: 85%;
+}
+
+#custom-menu {
+  width: 40%;
+}
+
 .colormap, .left-label, .roi-toggle {
   padding: 10px;
   display: inline-block;
@@ -112,7 +121,8 @@ input[type="search"] {
 }
 
 .max, .min {
-  width: 35%;
+  flex-shrink: 0;
+  width: 30%;
   padding: 10px;
 }
 

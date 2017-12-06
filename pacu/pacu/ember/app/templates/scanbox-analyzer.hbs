@@ -166,7 +166,7 @@
     </div>
 
   <section class="ui clearing divider"></section>
-  <div class="flex-container"> {{!-- Start flex div --}}
+  <div class="flex-container menu"> {{!-- Start flex div --}}
 
     <div class="left-label">Active ROI: </div>
     <div class="field-container">
@@ -254,7 +254,8 @@
           {{/if}}
         </div>
       </div>
-
+    </div>
+    <div id="custom-menu">
       <div id="compute-button" class="ui small compact inverted icon bottom menu field-container">
         <a class="ui dropdown {{if projBusy "disabled"}} item">
           Colormap
@@ -356,6 +357,11 @@
             </span>
           </div>
         </a>
+
+        <div class="item">
+          <span class={{if fbConnection "connected" "disconnected"}}>Connection Status</span>
+        </div>
+
       </div>
     </div>
   </div> {{!-- End flexed div --}}
@@ -415,6 +421,7 @@
           updateTable=(action "updateTable")
           ensureWorkspace=(action "ensureWorkspace")
           updateNeuropil=(action "saveNeuropilConfig")
+          initializeDbMonitor=(action "monitorFirebaseConnection")
           placeMode=placeMode
           curIndex=stream.img.curIndex
           disableHandles=disableHandles

@@ -47,8 +47,10 @@ export default Route.extend({
   },
   socket: service(),
   session: service(),
+  roiRecord: service(),
   model(param) {
     const store = this.get('store');
+    const roiRecord = this.get('roiRecord');
     window.R = this;
     const hops = param.hops.split('/');
     const wsName = hops.pop();
@@ -116,7 +118,8 @@ export default Route.extend({
           name: wsAlias
         });
       };
-      ws.get('rois');
+      // bind rois to roi-record service
+      roiRecord.set('all', ws.get('rois'));
       return ws;
     });
     //const rois = this.get('store').query('roi', {

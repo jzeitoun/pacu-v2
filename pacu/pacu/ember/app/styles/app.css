@@ -345,8 +345,16 @@ polygon.selected, polygon.dragging, polygon.neuropil.selected, polygon.neuropil.
   right: 0;
   bottom: 0;
   top: 0;
-  height: 34%;
+  height: 17rem;
   width: 50%;
+}
+
+span.disconnected {
+  color: orange;
+}
+
+span.connected {
+  color: lime;
 }
 
 /*.dot {

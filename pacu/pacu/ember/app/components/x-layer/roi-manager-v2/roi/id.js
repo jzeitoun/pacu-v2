@@ -5,13 +5,13 @@ import { computed } from '@ember/object';
 export default Component.extend({
   tagName: 'text',
   classNames: ['unselectable'],
-  classNameBindings: ['visible:visible-id:hidden-id'],
+  classNameBindings: ['hover:visible-id:hidden-id'],
   attributeBindings: ['x','y','fontSize:font-size', 'fill'],
   roi_id: null,
   points: null,
   hover: false,
   selected: false,
-  visible: computed.or('hover', 'selected'),
+  //visible: computed.or('hover', 'selected'),
   fontSize: 20,
   fill: '#FFFFFF',
   x: Ember.computed('points', function() {

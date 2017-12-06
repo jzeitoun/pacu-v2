@@ -1,27 +1,14 @@
-import Ember from 'ember';
+import Service from '@ember/service';
+import { computed } from '@ember/object';
 
-export default Ember.Service.extend({
+export default Service.extend({
   all: null,
-  computed: Ember.computed('all.@each.{polygon,lastComputedPolygon}', function() {
-    var allROIs = this.get('all').toArray();
-    var computedROIs = [];
-    for (var i=0; i<allROIs.length; i++) {
-      var roi = allROIs[i];
-      if (roi.get('polygon') == roi.get('lastComputedPolygon')) {
-        computedROIs.push(roi);
-      };
-    };
-    return computedROIs;
+  selected: computed.filterBy('all', 'selected', true),
+  unselected: computed.filterBy('all', 'selected', false),
+  computed: computed.filter('all.@each.{polygon,lastComputedPolygon}', function(roi, index, array) {
+    return roi.get('polygon') == roi.get('lastComputedPolygon');
   }),
-  uncomputed: Ember.computed('all.@each.{polygon,lastComputedPolygon}', function() {
-    var allROIs = this.get('all').toArray();
-    var uncomputedROIs = [];
-    for (var i=0; i<allROIs.length; i++) {
-      var roi = allROIs[i];
-      if (!(roi.get('polygon') == roi.get('lastComputedPolygon'))) {
-        uncomputedROIs.push(roi);
-      };
-    };
-    return uncomputedROIs;
+  uncomputed: computed.filter('all.@each.{polygon,lastComputedPolygon}', function(roi, index, array) {
+    return roi.get('polygon') != roi.get('lastComputedPolygon');
   }),
 });

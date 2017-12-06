@@ -5,6 +5,8 @@ import download from 'pacu-v2/utils/download';
 import batch from 'pacu-v2/utils/batch';
 import firebase from 'firebase';
 
+const { getOwner } = Ember;
+
 const include = 'dtoverallmean,dtorientationbestprefs,dtorientationsmeans,dtorientationsfits,dtanovaeachs,dtsfreqfits,dtanovaalls';
 const queryParams = { include };
 
@@ -27,8 +29,23 @@ Date.prototype.toCustomString = function() {
 export default Controller.extend({
   selection: [],
   roiRecord: service(),
+
   actions: {
+    monitorFirebaseConnection() {
+      console.log('monitor set up');
+      var connectedRef = firebase.app().database().ref('.info/connected');
+      connectedRef.on('value', snap => {
+        if (snap.val() === true) {
+          this.set('fbConnection', true);
+        } else {
+          this.set('fbConnection', false);
+        }
+      });
+    },
+
     addROI(roi, file, workspace) {
+      const roiRecord = this.get('roiRecord');
+      debugger;
       file.save(); // saving roi_count to file to maintain compatibility with sqlite structure
       var newROI = this.get('store').createRecord('fb-roi', roi);
       workspace.get('rois').addObject(newROI);
@@ -76,7 +93,6 @@ export default Controller.extend({
       this.model.firebaseWorkspace.save();
     },
 
-
     computeROIs(rois, workspace) {
       this.toast.info('Running ROI computations...');
       const store = this.get('store');
@@ -93,79 +109,84 @@ export default Controller.extend({
             roi.save();
           };
         });
-        rois.forEach(function(roi) {
-          // if roi is already computed, skip
-          if (roi.get('polygon') == roi.get('lastComputedPolygon')) {
-            return;
-          };
-          // create sqlite record if none exists
-          if (!existingIDs.includes(roi.get('roi_id'))) {
-            //console.log(existingIDs);
-            //console.log(roi.get('roi_id'));
-            var polygon = pointsToArray(roi.get('polygon')).map(function(point) {
-              return {x:point[0], y:point[1]};
-            });
-            var neuropilPolygon = pointsToArray(roi.get('neuropilPolygon')).map(function(point) {
-              return {x:point[0], y:point[1]};
-            });
-            var newRecord = store.createRecord('roi', {
-              polygon: polygon,
-              workspace: workspace,
-              neuropil_polygon: neuropilPolygon,
-              neuropil_enabled: model.firebaseWorkspace.get('neuropil_enabled'),
-              neuropil_ratio: model.firebaseWorkspace.get('neuropil_ratio'),
-              neuropil_factor: model.firebaseWorkspace.get('neuropil_factor')
-            });
-            // compute
-            newRecord.save().then(() => {
-              newRecord.refreshAll().then(result => {
-                roi.set('lastComputedPolygon', roi.get('polygon'));
+        // compute rois sequentially
+        rois.reduce(function(cur, roi) {
+          return cur.then(function() {
+            if (roi.get('polygon') == roi.get('lastComputedPolygon')) {
+              return;
+            };
+            // create sqlite record if none exists
+            if (!existingIDs.includes(roi.get('roi_id'))) {
+              //console.log(existingIDs);
+              //console.log(roi.get('roi_id'));
+              var polygon = pointsToArray(roi.get('polygon')).map(function(point) {
+                return {x:point[0], y:point[1]};
               });
-            });
-          } else {
-            // record exists, skip to compute
-            var roiData = roiDataObjects.filterBy('id', String(roi.get('roi_id'))).get('firstObject');
-            // update coordinates and neuropil configuration
-            var polygon = pointsToArray(roi.get('polygon')).map(function(point) {
-              return {x:point[0], y:point[1]};
-            });
-            var neuropilPolygon = pointsToArray(roi.get('neuropilPolygon')).map(function(point) {
-              return {x:point[0], y:point[1]};
-            });
-            roiData.setProperties({
-              'polygon': polygon,
-              'neuropil_polygon': neuropilPolygon,
-              'neuropil_enabled': model.firebaseWorkspace.get('neuropil_enabled'),
-              'neuropil_ratio': model.firebaseWorkspace.get('neuropil_ratio'),
-              'neuropil_factor': model.firebaseWorkspace.get('neuropil_factor')
-            });
-            roiData.save();
-            return store.createRecord('action', {
-              model_name: 'ROI',
-              model_id: roiData.id,
-              action_name: 'refresh_all'
-            }).save().then((action) => {
-              if (action.get('status_code') === 500) {
-                //console.log(`ROI ${roiData.id} returned an error.`);
-                //this.get('toast').error(action.get('status_text'));
-                roi.set('lastComputedPolygon', '');
-                roi.save();
-              } else {
-                //console.log(`Finished computing ${roiData.id}`)
-                roi.set('lastComputedPolygon', roi.get('polygon'));
-                roi.save();
-              };
-            }).finally(() => {
-            });
-          }
+              var neuropilPolygon = pointsToArray(roi.get('neuropilPolygon')).map(function(point) {
+                return {x:point[0], y:point[1]};
+              });
+              var newRecord = store.createRecord('roi', {
+                polygon: polygon,
+                workspace: workspace,
+                neuropil_polygon: neuropilPolygon,
+                neuropil_enabled: model.firebaseWorkspace.get('neuropil_enabled'),
+                neuropil_ratio: model.firebaseWorkspace.get('neuropil_ratio'),
+                neuropil_factor: model.firebaseWorkspace.get('neuropil_factor')
+              });
+              // compute
+              console.log('adding roi to db before computing');
+              return newRecord.save().then(() => {
+                return newRecord.refreshAll().then(result => {
+                  return roi.set('lastComputedPolygon', roi.get('polygon'));
+                });
+              });
+            } else {
+              console.log('computing existing roi');
+              // record exists, skip to compute
+              var roiData = roiDataObjects.filterBy('id', String(roi.get('roi_id'))).get('firstObject');
+              // update coordinates and neuropil configuration
+              var polygon = pointsToArray(roi.get('polygon')).map(function(point) {
+                return {x:point[0], y:point[1]};
+              });
+              var neuropilPolygon = pointsToArray(roi.get('neuropilPolygon')).map(function(point) {
+                return {x:point[0], y:point[1]};
+              });
+              roiData.setProperties({
+                'polygon': polygon,
+                'neuropil_polygon': neuropilPolygon,
+                'neuropil_enabled': model.firebaseWorkspace.get('neuropil_enabled'),
+                'neuropil_ratio': model.firebaseWorkspace.get('neuropil_ratio'),
+                'neuropil_factor': model.firebaseWorkspace.get('neuropil_factor')
+              });
+              roiData.save();
+              return store.createRecord('action', {
+                model_name: 'ROI',
+                model_id: roiData.id,
+                action_name: 'refresh_all'
+              }).save().then((action) => {
+                if (action.get('status_code') === 500) {
+                  //console.log(`ROI ${roiData.id} returned an error.`);
+                  //this.get('toast').error(action.get('status_text'));
+                  roi.set('lastComputedPolygon', '');
+                  return roi.save();
+                } else {
+                  //console.log(`Finished computing ${roiData.id}`)
+                  roi.set('lastComputedPolygon', roi.get('polygon'));
+                  return roi.save();
+                };
+              });
+            };
+          });
+        }, Ember.RSVP.resolve()).then(function() {
+            //setTimeout(function() { modal.modal('hide'); }, 2000);
         });
-      });
 
-      function pointsToArray(strPoints) {
-        return strPoints.match(/[^,]+,[^,]+/g).map(function(point) {
-          return point.split(',').map(Number);
-        });
-      }
+        function pointsToArray(strPoints) {
+          return strPoints.match(/[^,]+,[^,]+/g).map(function(point) {
+            return point.split(',').map(Number);
+          });
+        }
+      });
     },
 
     ensureWorkspace(file, workspace, firebaseWorkspace) {
@@ -287,11 +308,18 @@ export default Controller.extend({
           }
         });
         modal.modal('show');
-        route.model.file.set('roi_count', data.length);
+        // set cur ID based on max id in roi list, not number of rois
+        var ids = data.map(function(roi) {
+          return roi.roi_id;
+        });
+        var maxID = ids.reduce(function(a, b) {
+          return Math.max(a, b);
+        });
+        route.model.file.set('roi_count', maxID);
         route.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
         var i = data.length;
         // ROI creation produces promises, which can lead to a crash when running
-        // too many concurrently. Using reduce can call them sequentially.
+        // too many concurrently. Using reduce will call them sequentially.
         data.reduce(function(cur, roi) {
           return cur.then(function() {
             roi.created = firebase.database.ServerValue.TIMESTAMP;
