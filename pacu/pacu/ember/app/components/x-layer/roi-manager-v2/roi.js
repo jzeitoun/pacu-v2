@@ -118,7 +118,7 @@ export default Component.extend({
       function(p) { return [p.x, p.y]; }
     );
     // if there is a hit on vertex, return vertex
-    var tol = 5;
+    var tol = 3;
     var vertexHit = vertexPoints.maskFilter(vertexPoints.map(
         function(x) { return checkPoint(e, x, tol); }
       )

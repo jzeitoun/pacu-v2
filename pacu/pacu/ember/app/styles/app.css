@@ -254,28 +254,6 @@ polygon.selected, polygon.dragging, polygon.neuropil.selected, polygon.neuropil.
   position: relative;
 }
 
-.ui.checkbox input:checked ~ .box:after, .ui.checkbox input:checked ~ label:after {
-  color: #FFFFFF;
-}
-
-.ui.checkbox .box:after, .ui.checkbox label:after {
-  background: #3878b2;
-  color: #FFFFFF;
-}
-
-.ui.checkbox label#custom {
-  color: #FFFFFF;
-}
-
-.custom-li {
-  margin: 0.5rem 0rem;
-  list-style: none
-}
-
-.custom-li > label#custom{
-  padding: 1rem;
-}
-
 *.unselectable {
    -moz-user-select: -moz-none;
    -khtml-user-select: none;

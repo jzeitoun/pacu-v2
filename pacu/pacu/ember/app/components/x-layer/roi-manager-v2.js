@@ -186,7 +186,6 @@ export default Ember.Component.extend({
       var radius = this.get('roiPrototype.radius');
       var numPoints = this.get('roiPrototype.numPoints');
       //console.log(e.key);
-      e.preventDefault();
       switch (e.key) {
         case 'ArrowLeft':
           if (this.get('placeMode')) {
@@ -199,7 +198,7 @@ export default Ember.Component.extend({
               roi.set('polygon', newPoints.join());
             });
           };
-          break;
+          return false;
         case 'ArrowRight':
           if (this.get('placeMode')) {
             this.set('roiPrototype.numPoints', numPoints+1);
@@ -211,7 +210,7 @@ export default Ember.Component.extend({
               roi.set('polygon', newPoints.join());
             });
           };
-          break;
+          return false;
         case 'ArrowDown':
           if (this.get('placeMode')) {
             this.set('roiPrototype.radius', radius-1);
@@ -223,7 +222,7 @@ export default Ember.Component.extend({
               roi.set('polygon', newPoints.join());
             });
           };
-          break;
+          return false;
         case 'ArrowUp':
           if (this.get('placeMode')) {
             this.set('roiPrototype.radius', radius+1);
@@ -235,7 +234,7 @@ export default Ember.Component.extend({
               roi.set('polygon', newPoints.join());
             });
           };
-          break;
+          return false;
         case 'm':
           this.toggleProperty('placeMode');
           break;
@@ -247,10 +246,14 @@ export default Ember.Component.extend({
           var disableHandles = this.get('disableHandles');
           break;
         case ',':
-          this.decrementProperty('curIndex');
+          if (this.get('curIndex') > 0) {
+            this.decrementProperty('curIndex');
+          };
           break;
         case '.':
-          this.incrementProperty('curIndex');
+          if (this.get('curIndex') < this.get('maxIndex')) {
+            this.incrementProperty('curIndex');
+          };
           break;
         case 'Delete':
           this.get('selectedROIs').map(this.get('delete'));
@@ -264,9 +267,9 @@ export default Ember.Component.extend({
               roi.set('selected', true);
             });
           };
-          break;
-        default:
           return false;
+        default:
+          break;
       }
     });
   },

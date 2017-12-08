@@ -61,6 +61,12 @@ export default Controller.extend({
       roi.save()
     },
 
+    deselectAll() {
+      this.get('roiRecord.selected').map(function(roi) {
+        roi.set('selected', false);
+      });
+    },
+
     updateTable(selectedROIs) {
       const store = this.get('store');
       var activeIDs = selectedROIs.map(function(roi) { return roi.get('roi_id'); })
@@ -393,6 +399,11 @@ export default Controller.extend({
     setCmap(cmap) {
       this.model.stream.set('img.cmap', cmap);
       this.toast.info(`Colormap changed to ${cmap}`);
+    },
+
+    setChannel(channel) {
+      this.model.stream.set('img.channelDisplay', channel);
+      this.toast.info(`Channel display set to ${channel}`);
     },
 
     //updateFrameShift() {

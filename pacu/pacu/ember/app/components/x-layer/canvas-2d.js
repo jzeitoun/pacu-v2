@@ -24,6 +24,6 @@ export default Component.extend({
 
   didInsertElement() {
     // ensures default value of 255 for contrast slider
-    document.getElementById('max-slider').value = "255"
+    //document.getElementById('max-slider').value = "255"
   }
 });

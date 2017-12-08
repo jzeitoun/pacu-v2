@@ -1,0 +1,20 @@
+/*******************************
+    User Variable Overrides
+*******************************/
+
+/*-------------------
+  Inverted dropdowns
+--------------------*/
+@invertedDropdownBackground: @black;
+@invertedDropdownMenuBoxShadow: none;
+
+@invertedDropdownItemColor: @invertedMutedTextColor;
+
+@invertedDropdownHoveredItemBackground: @transparentWhite;
+@invertedDropdownHoveredItemColor: @invertedDropdownItemColor;
+
+@invertedDropdownActiveItemBackground: transparent;
+@invertedDropdownActiveItemColor: @invertedDropdownItemColor;
+
+@invertedDropdownSelectedItemBackground: @strongTransparentWhite;
+@invertedDropdownSelectedItemColor: @invertedDropdownItemColor;

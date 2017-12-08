@@ -15,8 +15,25 @@ const Image = EmberObject.extend({
   buffer: null,
   curIndex: 0,
   cmap: 'Gray', // added attribute (JZ)
+  channelDisplay: 'Green', // default to green channel
+  showGreen: Ember.computed('channelDisplay', function() {
+    if (this.get('channelDisplay') == 'Both' || this.get('channelDisplay') == 'Green') {
+      return true;
+    } else {
+      return false;
+    };
+  }),
+  showRed: Ember.computed('channelDisplay', function() {
+    if (this.get('channelDisplay') == 'Both' || this.get('channelDisplay') == 'Red') {
+      return true;
+    } else {
+      return false;
+    };
+  }),
   max: 255, // added to control colormap contrast (JZ)
   min: 0, // added to control colormap contrast (JZ)
+  red_max: 255,
+  red_min: 0,
   maxp_max: 255, // added to control colormap contrast (JZ)
   maxp_min: 0, // added to control colormap contrast (JZ)
   meanp_max: 255, // added to control colormap contrast (JZ)
@@ -49,8 +66,9 @@ export default Ember.Object.extend({
     this.set('img.maxp', false);
     this.set('img.meanp', false);
     this.set('img.sump', false);
-    this.set_contrast();
+    this.setRGBContrast();
     console.log('frame requested');
+    var ch = this.get('img.channel');
     return this.get('wsx').invokeAsBinary(
         'ch0.request_frame', parseInt(index)).then(buffer => { console.log('frame received');
       this.set('img.buffer', buffer);
@@ -65,12 +83,19 @@ export default Ember.Object.extend({
     });
   },
 
-  set_cmap(cmap) {
+  setCmap() {
     this.get('wsx').invokeAsBinary(
-      'ch0.set_cmap', this.get('img.cmap'))
+      'ch0.set_cmap', this.get('img.cmap'));
   },
 
-  set_contrast() {
+  setRGBContrast() {
+    var {'img.min':min, 'img.max':max, 'img.red_min':red_min, 'img.red_max':red_max} = this.getProperties('img.min', 'img.max', 'img.red_min', 'img.red_max');
+    this.get('wsx').invokeAsBinary(
+      'ch0.set_rgb_contrast', min, max, red_min, red_max
+    );
+  },
+
+  setContrast() {
     var image_type = String(this.get('img.projection'));
     switch (image_type) {
       case 'max':
@@ -94,19 +119,26 @@ export default Ember.Object.extend({
   },
 
   indexChanged: observer('img.curIndex', function() {
-    this.set_contrast();
+    this.setRGBContrast();
+    this.requestFrame(this.get('img.curIndex'));
+  }),
+  channelChanged: observer('img.channelDisplay', function() {
+    this.setRGBContrast();
+    this.get('wsx').invokeAsBinary(
+      'ch0.set_channel', this.get('img.channelDisplay')
+    );
     this.requestFrame(this.get('img.curIndex'));
   }),
   cmapChanged: observer('img.cmap', function() {
-    this.set_cmap(this.get('img.cmap')); // added cmap argument JZ
+    this.setCmap(this.get('img.cmap')); // added cmap argument JZ
     if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
       this.requestProjection(this.get('img.projection'));
     } else {
       this.requestFrame(this.get('img.curIndex'));
     };
   }),
-  contrastChanged: observer('img.{min,max,maxp_min,maxp_max,meanp_min,meanp_max,sump_min,sump_max}', function() {
-    this.set_contrast();
+  contrastChanged: observer('img.{min,max,red_min,red_max,maxp_min,maxp_max,meanp_min,meanp_max,sump_min,sump_max}', function() {
+    this.setRGBContrast();
     if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
       Ember.run.debounce(this, () => this.requestProjection(this.get('img.projection')), 150);
     } else {
@@ -117,68 +149,27 @@ export default Ember.Object.extend({
     return { height: 0 };
   }),
 
-  overlayMPI() {
-    swal({
-      title: 'Please specify colormap variables',
-      html: `
-        <div id="cmap-params" class="ui form">
-          <h4 class="ui dividing header">Value range is between 0 and 1</h4>
-          <div class="four fields">
-            <div class="field">
-              <label>X Mid1</label>
-              <input type="number" name="xmid1" placeholder="X Mid1" value="0.25">
-            </div>
-            <div class="field">
-              <label>Y Mid1</label>
-              <input type="number" name="ymid1" placeholder="Y Mid2" value="0.25">
-            </div>
-            <div class="field">
-              <label>X Mid2</label>
-              <input type="number" name="xmid2" placeholder="X Mid2" value="0.75">
-            </div>
-            <div class="field">
-              <label>Y Mid2</label>
-              <input type="number" name="ymid2" placeholder="Y Mid2" value="0.75">
-            </div>
-          </div>
-        </div>
-      `,
-      onOpen: function () {
-        $('input[name="xmid1"]').focus();
-      }
-    }).then(result => {
-      const xmid1 = parseFloat($('input[name="xmid1"]').val());
-      const ymid1 = parseFloat($('input[name="ymid1"]').val());
-      const xmid2 = parseFloat($('input[name="xmid2"]').val());
-      const ymid2 = parseFloat($('input[name="ymid2"]').val());
-      const cmap = { xmid1, ymid1, xmid2, ymid2 };
-      this.get('wsx').invokeAsBinary('ch0.request_maxp', cmap).then(buffer => {
-        this.set('img.buffer', buffer);
-        this.set('img.mpi', true);
-      });
-    }).catch(swal.noop)
-  },
-
   overlayProjection(image_type) {
-    this.set('img.meanp', false);
-    this.set('img.maxp', false);
-    this.set('img.sump', false);
-    switch (image_type) {
-      case 'max':
-        this.set('img.maxp', true);
-        this.set_contrast();
-        break;
-      case 'mean':
-        this.set('img.meanp', true);
-        this.set_contrast();
-        break;
-      case 'sum':
-        this.set('img.sump', true);
-        this.set_contrast();
-        break;
-      default:
-        return;
-    };
+    //this.set('img.meanp', false);
+    //this.set('img.maxp', false);
+    //this.set('img.sump', false);
+    //switch (image_type) ({
+    //  case 'max':
+    //    this.set('img.maxp', true);
+    //    this.setRGBContrast();
+    //    break;
+    //  case 'mean':
+    //    this.set('img.meanp', true);
+    //    this.setRGBContrast();
+    //    break;
+    //  case 'sum':
+    //    this.set('img.sump', true);
+    //    this.setRGBContrast();
+    //    break;
+    //  default:
+    //    return;
+    //};
+    this.set('img.channelDisplay', 'Green');
     this.get('wsx').invokeAsBinary('ch0.request_projection', image_type).then(buffer => {
       this.set('img.buffer', buffer);
     });

@@ -1,4 +1,5 @@
 import functools
+import os
 from cStringIO import StringIO
 
 from PIL import Image
@@ -13,6 +14,9 @@ from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable, jet, gray, viridis, plasma, inferno, magma, bone, pink, spring, summer, autumn, winter, cool, Wistia, hot, PRGn, PuOr, RdGy, Spectral, coolwarm
 autumn, winter, cool, Wistia, hot, PRGn, PuOr, RdGy, Spectral, coolwarm
 from pacu.core.io.util.colormap.distorted2 import DistortedColormap2
+
+from pacu.core.addons import globe # Used to hold global variables for multiprocessing
+from pacu.core.addons import multiprocessing # Using monkey-patched library for compatiblity with tornado websockets
 
 colormaps = {
     'Gray': gray,
@@ -36,6 +40,11 @@ colormaps = {
     'Spectral': Spectral,
     'Cool-Warm': coolwarm
     }
+
+def converter(index_set):
+    for idx in index_set:
+        globe.sink[idx] = ~globe.source[idx]
+        globe.sink[idx][globe.sink[idx]==65535] = 0 # To ensure alignment margins are black
 
 class ScanboxChannelMeta(object):
     __repr__ = repr.auto_strict
@@ -65,11 +74,19 @@ class ScanboxChannel(object):
         self.meanppath = self.path.join_suffixes('.meanp.npy')
         self.sumppath = self.path.join_suffixes('.sump.npy')
         self.mmappath = self.path.join_suffixes('.mmap.npy')
-        self.statpath = self.path.join_suffixes('.stat.npy')
         self.metapath = self.path.join_suffixes('.meta.json')
         self.cmap = colormaps['Gray']
+        self.blue_channel = np.zeros(self.shape[1:], dtype='uint8')
+        self.alpha_channel = np.full(self.shape[1:], 255, dtype='uint8')
+        self.channel_display = 'Green'
         self.min_val = 0
         self.max_val = 255
+        self.red_min_val = 0
+        self.red_max_val = 255
+    def scale(self, array):
+        return (255 * (np.float64(array) - self.min_val)) / (self.max_val - self.min_val)
+    def red_scale(self, array):
+        return (255 * (np.float64(array) - self.red_min_val)) / (self.red_max_val - self.red_min_val)
     def import_with_io(self, io):
         print 'Import channel {}.'.format(self.channel)
         if io.mat.scanmode == 0:
@@ -78,14 +95,12 @@ class ScanboxChannel(object):
             print 'Uni-directional recording.'
         return self._import_with_io3(io)
     def _import_with_io3(self, io):
-        height, width = map(int, io.mat.sz)
         shape = io.mat.get_shape(io.sbx.path.size)
-        frame_size = height * width * 2
-        depth = shape[0]
-        max = np.zeros(depth, dtype='uint16')
-        min = np.zeros(depth, dtype='uint16')
-        mean = np.zeros(depth, dtype='float64')
-        print 'Iterating over {} frames...with chunk size {}'.format(depth, frame_size)
+        depth, height, width = map(int, shape)
+        flat_data = np.memmap(io.sbx_path.str, dtype='uint16', mode='r')
+        globe.source = flat_data[self.channel::io.mat.nchannels].reshape(shape)
+        globe.sink = np.memmap(self.mmappath.str, dtype='uint16', mode='w+', shape=shape)
+
         p = psutil.Process()
         try:
             prev_nice = p.nice()
@@ -94,31 +109,25 @@ class ScanboxChannel(object):
             p.ionice(3)
         except Exception as e:
             print '[NICE] Warn: {}'.format(str(e))
-        with open(self.mmappath.str, 'w') as npy, io.sbx.path.open('rb') as raw_file:
-            chunks = iter(functools.partial(raw_file.read, frame_size), '')
-            for i, chunk in enumerate(chunks):
-                if i < depth:
-                    if (i % 100) == 0:
-                        mem_pct = p.memory_percent()
-                        if mem_pct > 75:
-                            raise MemoryError('Too much memory used. Processing aborted.')
-                        print ('Processing frames at ({}/{}). '
-                               'Mem usage {}%').format(i, depth, mem_pct)
-                    f = ~np.frombuffer(chunk, dtype='uint16')
-                    f[f == 65535] = 0
-                    npy.write(f.tostring())
-                    max[i] = f.max()
-                    min[i] = f.min()
-                    mean[i] = f.mean()
-        # try:
-        #     p.nice(prev_nice)
-        #     p.ionice(prev_ionice.ioclass)
-        # except Exception as e:
-        #     print '[NICE] Warn: {}'.format(str(e))
+
+        all_indices = np.arange(depth)
+        if depth > 100:
+            task_size = 100
+            num_tasks = all_indices.shape[0] / task_size
+        else:
+            num_tasks = 2
+        index_sets = np.array_split(all_indices, num_tasks)
+
+        process_pool = multiprocessing.Pool(1)
+        print 'Data contains {} channels and {} frames per channel'.format(io.mat.nchannels, depth)
+        for i,_ in enumerate(process_pool.imap_unordered(converter, index_sets), 1):
+            mem_pct = p.memory_percent()
+            if mem_pct > 75:
+                raise MemoryError('Too much memory used. Process aborted.')
+            print ('Finished frame {}/{}). '
+                   'Mem usage {}%').format(i*100, depth, mem_pct)
         meta = ScanboxChannelMeta('uint16', depth, int(height), int(width))
-        stat = np.rec.fromarrays([max, min, mean], names='MAX, MIN, MEAN')
         meta.save(self.metapath.str)
-        np.save(self.statpath.str, stat)
         print 'Converting done!'
         return self
     @property
@@ -131,7 +140,19 @@ class ScanboxChannel(object):
     def has_sump(self):
         return self.sumppath.is_file()
     def request_frame(self, index):
-        return self.cmap8bit.to_rgba(self.mmap8bit[index], bytes=True).tostring()
+        if self.channel_display == 'Green':
+            return self.cmap8bit.to_rgba(self.mmap8bit[index], bytes=True).tostring()
+        elif self.channel_display == 'Red':
+            return self.red_cmap8bit.to_rgba(self.red_mmap8bit[index], bytes=True).tostring()
+        elif self.channel_display == 'Both':
+            red_channel = self.red_scale(self.red_mmap8bit[index]).astype('uint8')
+            green_channel = self.scale(self.mmap8bit[index]).astype('uint8')
+            return np.stack((
+                red_channel,
+                green_channel,
+                self.blue_channel,
+                self.alpha_channel
+                ), axis=0).transpose(1,2,0).tostring()
     def request_projection(self, image_type):
         if image_type == 'max':
             proj = self.maxp.view('uint8')[..., 1::2]
@@ -145,33 +166,38 @@ class ScanboxChannel(object):
     def set_contrast(self, min_val, max_val):
             self.min_val = int(min_val)
             self.max_val = int(max_val)
+    def set_rgb_contrast(self, min_val, max_val, red_min_val, red_max_val):
+            self.min_val = int(min_val)
+            self.max_val = int(max_val)
+            self.red_min_val = int(red_min_val)
+            self.red_max_val = int(red_max_val)
+    def set_channel(self, channel):
+        self.channel_display = channel
     @memoized_property
     def mmap8bit(self):
         return self._mmap.view('uint8'
+            )[self.c_focal_pane::self.n_focal_pane, :, 1::2]
+    @memoized_property
+    def red_mmap8bit(self):
+        return self.red_mmap.view('uint8'
             )[self.c_focal_pane::self.n_focal_pane, :, 1::2]
     @property
     def cmap8bit(self):
         return ScalarMappable(norm=self.norm, cmap=self.cmap)
     @property
+    def red_cmap8bit(self):
+        return ScalarMappable(norm=self.red_norm, cmap=self.cmap)
+    @property
     def norm(self):
         return Normalize(
             vmin=self.min_val, vmax=self.max_val)
+    @property
+    def red_norm(self):
+        return Normalize(
+            vmin=self.red_min_val, vmax=self.red_max_val)
     @memoized_property
     def dcmap(self):
         return DistortedColormap2('jet', xmid1=0.35, ymid1=0.65)
-    #@cmap8bit.invalidator
-    #def update_colormap(self, name, xmid1, ymid1, xmid2, ymid2):
-    #    x1 = float(xmid1) / 100
-    #    y1 = float(ymid1) / 100
-    #    x2 = float(xmid2) / 100
-    #    y2 = float(ymid2) / 100
-    #    self.dcmap = DistortedColormap2(name,
-    #        xmid1=x1, ymid1=y1, xmid2=x2, ymid2=y2)
-    #def request_maxp(self, cmap_kwargs):
-    #    dcmap = DistortedColormap2('gray', **cmap_kwargs)
-    #    return dcmap.distorted(
-    #    # return gray(
-    #        self.maxp.view('uint8')[..., 1::2], bytes=True).tostring()
     def request_maxp_tiff(self):
         arr = self.maxp.view('uint8')[..., 1::2]
         i = Image.fromarray(arr)
@@ -205,23 +231,6 @@ class ScanboxChannel(object):
     @property
     def sump(self):
         return np.load(self.sumppath.str) if self.sumppath.is_file() else None
-    #@maxp.invalidator
-    #def create_maxp(self):
-    #    print 'Create max projection image...could take up from a few minutes to hours.'
-    #    chan = self.mmap
-    #    depth = len(chan)
-    #    image = np.zeros_like(chan[0])
-    #    p = psutil.Process()
-    #    for i, frame in enumerate(chan):
-    #        if (i % 500) == 0:
-    #            mem_pct = p.memory_percent()
-    #            if mem_pct > 75:
-    #                raise MemoryError('Too much memory used. Processing aborted.')
-    #            print ('Processing frames at ({}/{}). '
-    #                   'Mem usage {}%').format(i, depth, mem_pct)
-    #        image = np.maximum(image, frame)
-    #    np.save(self.maxppath.str, image)
-    #    print 'done!'
     def generate_projections(self, start, end):
         start = int(start)
         end = int(end)
@@ -254,16 +263,20 @@ class ScanboxChannel(object):
         np.save(self.sumppath.str, sum_image)
         print 'Done!'
     @memoized_property
-    def stat(self):
-        stat = np.load(self.statpath.str)
-        return np.rec.fromrecords(stat, dtype=stat.dtype)
-    @memoized_property
     def meta(self):
         return ScanboxChannelMeta.load(self.metapath.str)
     @memoized_property
     def _mmap(self):
         shape = (self.meta.z, self.meta.y, self.meta.x)
         return np.memmap(self.mmappath.str,
+            mode='r', dtype=self.meta.dtype, shape=shape
+        )
+    @memoized_property
+    def red_mmap(self):
+        shape = (self.meta.z, self.meta.y, self.meta.x)
+        root = os.path.split(self.mmappath.str)[0]
+        red_path = os.path.join(root, '1.chan.mmap.npy')
+        return np.memmap(red_path,
             mode='r', dtype=self.meta.dtype, shape=shape
         )
     @memoized_property
@@ -276,14 +289,3 @@ class ScanboxChannel(object):
     @property
     def shape(self):
         return (self.meta.z/self.n_focal_pane, self.meta.y, self.meta.x)
-
-#import functools
-#from cStringIO import StringIO
-#
-#from PIL import Image
-#import numpy as np
-#    z, y, x = self.mmap.shape
-#    return dict(depth=z, height=y, width=x)
-#    @property
-#    def shape(self):
-#        return (self.meta.z/self.n_focal_pane, self.meta.y, self.meta.x)

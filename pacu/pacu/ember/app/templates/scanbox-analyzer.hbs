@@ -20,6 +20,7 @@
   <a class="item" {{action "reloadTracePlot"}}>
     <i class="red line chart icon"></i>
   </a>
+
   {{#unless (eq model.condition.stimulus 'SparseNoiseStimulus')}}
   <a class="item">
     SF: {{dropdown-value
@@ -27,6 +28,7 @@
       value=model.workspace.cur_sfreq}}
   </a>
   {{/unless}}
+
   {{#if model.condition.contrasts}}
   <a class="item">
     Contrast: {{dropdown-value
@@ -38,6 +40,7 @@
       Contrast: {{model.condition.contrast}}
     </a>
   {{/if}}
+
   {{#if model.condition.tfrequencies}}
   <a class="item">
     TF: {{dropdown-value
@@ -45,13 +48,7 @@
       value=model.workspace.cur_tfreq}}
   </a>
   {{/if}}
-  {{!--
-  <a class="item" {{action "noop"}}>
-    Baseline Duration: {{model.workspace.baseline_duration}}
-  </a>
-  --}}
 
-  {{!--<div class="ui simple dropdown {{if maxpBusy "disabled"}} item">--}}
   <div class="ui simple dropdown {{if projBusy "disabled"}} item">
     Z-Projection{{!-- {{if stream.ch0HasMaxp "✓" "✗"}}--}}
     <i class="dropdown icon"></i>
@@ -70,28 +67,10 @@
         <div class="item" {{action "exportProjection" "sum"}}>Export SumProjection as Tiff</div>
       {{/if}}
     </div>
+
   </div>
 
   {{#unless (eq model.condition.stimulus 'SparseNoiseStimulus')}}
-    {{!--
-  <div class="ui simple dropdown item">
-    Global SoG Initial Guess
-    <i class="dropdown icon"></i>
-    <div class="menu">
-      {{#with model.workspace.sog_initial_guess as |p|}}
-      <div class="header">A1: {{p.a1min}} ~ {{p.a1max}}</div>
-      <div class="header">A2: {{p.a2min}} ~ {{p.a2max}}</div>
-      <div class="header">Sigma: {{p.sigmin}} ~ {{p.sigmax}}</div>
-      <div class="header">Offset: {{p.offmin}} ~ {{p.offmax}}</div>
-      {!--
-      <div class="divider"></div>
-      <div class="item" {{action "overlayMPI"}}>Change...</div>
-      --}
-      {{/with}}
-    </div>
-  </div>
-  --}}
-
   <div class="ui simple dropdown item">
     Export
     <i class="dropdown icon"></i>
@@ -127,6 +106,11 @@
         Update Frame Shift: {{model.workspace.params.frame_shift}}</div>
     </div>
   </div>
+
+  <div class="item">
+    <span class={{if fbConnection "connected" "disconnected"}}>Connection Status</span>
+  </div>
+
 </div>
 {{/sui-sticky}}
 
@@ -154,224 +138,250 @@
   {{! Main Canvas Slider }}
   <section class="ui clearing divider"></section>
     <div class="ui flex-container">
-      <div class="left-label">Index: </div>
-      <div class="field-container">
-          {{input value=stream.img.curIndex class="cur-index"}}
-      </div>
-
-      <div id="main-slider">
+      <label>Index:</label>
+        {{input value=stream.img.curIndex class="cur-index"}}
         {{input type="range" min="0" step="1"
           max=stream.img.maxIndex value=stream.img.curIndex}}
-      </div>
     </div>
 
   <section class="ui clearing divider"></section>
-  <div class="flex-container menu"> {{!-- Start flex div --}}
-
-    <div class="left-label">Active ROI: </div>
-    <div class="field-container">
-      {{input value=activeID class="cur-index" action="deselectAll" on="key-down"}}
+  <div class="flex-container">
+    <div class="flex-container">
+      <label>Active ROI:</label>
+      {{input value=activeID class="cur-index" key-down="deselectAll"}}
     </div>
 
-    {{! Aadded by RA }}
-    {{!--<div class="ui compact inverted icon menu">
-      {{! Dropdown to select ROI visualization mode. If true uses min mode. Right now this is handled as a bool.}}
-      <div class="ui simple dropdown item">
-        Display:{{#if MinModeROIs}}Minimal{{else}}Full Featured{{/if}}
+    <div class="ui inverted compact menu">
+
+      {{#ui-dropdown class="inverted item"}}
+        Display
         <i class="dropdown icon"></i>
         <div class="menu">
-          <div class="item" {{action "changeModeROIs" true}}>Minimal</div>
-          <div class="item" {{action "changeModeROIs" false}}>Full Featured</div>
+          <span class="active selected item" {{action "setChannel" "Green"}}>
+            Green
+          </span>
+          <span class="item" {{action "setChannel" "Red"}}>
+            Red
+          </span>
+          <span class="item" {{action "setChannel" "Both"}}>
+            Both
+          </span>
         </div>
-      </div>
+      {{/ui-dropdown}}
 
-      {{! toggle to show, hide ROIs. }}
-      <div class="left-label">Display ROIs:</div>
-      <div class="ui toggle checkbox roi-toggle">
-        <input type="checkbox" id="checkbox-toggle" name="cancelCheckbox" checked {{action "changeVisibilityROIs" on="change"}}/>
-      <label></label>
-      </div>
-
-    {{! End }}
-    </div>--}}
-
-    <div class="contrast">
-      <div class="left-label">Min: </div>
-      <div class="min">
-        {{#if stream.img.maxp}}
-          {{input id="min-slider" type="range" min=0
-            max=255 value=stream.img.maxp_min}}
-        {{else if stream.img.meanp}}
-          {{input id="min-slider" type="range" min=0
-            max=255 value=stream.img.meanp_min}}
-        {{else if stream.img.sump}}
-          {{input id="min-slider" type="range" min=0
-            max=255 value=stream.img.sump_min}}
-        {{else}}
-          {{input id="min-slider" type="range" min=0
-            max=255 value=stream.img.min}}
+      {{#ui-dropdown class="inverted item" action="nothing"}}
+        Contrast
+        <i class="dropdown icon"></i>
+        <div class="menu">
+          {{#if stream.img.showGreen}}
+            <div class="control-panel item">
+              <fieldset>
+                <legend class="green">Green</legend>
+                <div class="flex-container">
+                  <label for="green-min">Min:</label>
+                  {{input id="green-min" class="contrast-slider" type="range" min=0
+                    max=255 value=stream.img.min}}
+                  {{input value=stream.img.min class="control-panel"}}
+                  <label class="max" for="green-max">Max:</label>
+                  {{input id="green-max" class="contrast-slider" type="range" min=0
+                    max=255 value=stream.img.max}}
+                  {{input value=stream.img.max class="control-panel"}}
+                </div>
+              </fieldset>
+            </div>
           {{/if}}
-      </div>
-      <div>
-        <div class="field-container">
+          {{#if stream.img.showRed}}
+            <div class="control-panel item">
+              <fieldset>
+                <legend class="red">Red</legend>
+                <div class="flex-container">
+                  <label for="red-min">Min:</label>
+                  {{input id="red-min" class="contrast-slider" type="range" min=0
+                    max=255 value=stream.img.red_min}}
+                  {{input value=stream.img.red_min class="control-panel"}}
+                  <label class="max" for="red-max">Max:</label>
+                  {{input id="red-max" class="contrast-slider" type="range" min=0
+                    max=255 value=stream.img.red_max}}
+                  {{input value=stream.img.red_max class="control-panel"}}
+                </div>
+              </fieldset>
+            </div>
+          {{/if}}
+        </div>
+      {{/ui-dropdown}}
+
+      {{!--<div class="contrast">
+        <div class="left-label">Min: </div>
+        <div class="min">
           {{#if stream.img.maxp}}
-            {{input value=stream.img.maxp_min class="contrast-field"}}
+            {{input id="min-slider" type="range" min=0
+              max=255 value=stream.img.maxp_min}}
           {{else if stream.img.meanp}}
-            {{input value=stream.img.meanp_min class="contrast-field"}}
+            {{input id="min-slider" type="range" min=0
+              max=255 value=stream.img.meanp_min}}
           {{else if stream.img.sump}}
-            {{input value=stream.img.sump_min class="contrast-field"}}
+            {{input id="min-slider" type="range" min=0
+              max=255 value=stream.img.sump_min}}
           {{else}}
-            {{input value=stream.img.min class="contrast-field"}}
-          {{/if}}
+            {{input id="min-slider" type="range" min=0
+              max=255 value=stream.img.min}}
+            {{/if}}
         </div>
-      </div>
-      <div class="left-label">Max: </div>
-      <div class="max">
-        {{#if stream.img.maxp}}
-          {{input id="max-slider" type="range" min=0
-            max=255 value=stream.img.maxp_max}}
-        {{else if stream.img.meanp}}
-          {{input id="max-slider" type="range" min=0
-            max=255 value=stream.img.meanp_max}}
-        {{else if stream.img.sump}}
-          {{input id="max-slider" type="range" min=0
-            max=255 value=stream.img.sump_max}}
-        {{else}}
-          {{input id="max-slider" type="range" min=0
-            max=255 value=stream.img.max}}
-          {{/if}}
-      </div>
-      <div>
-        <div class="field-container">
-          {{#if stream.img.maxp}}
-            {{input value=stream.img.maxp_max class="contrast-field"}}
-          {{else if stream.img.meanp}}
-            {{input value=stream.img.meanp_max class="contrast-field"}}
-          {{else if stream.img.sump}}
-            {{input value=stream.img.sump_max class="contrast-field"}}
-          {{else}}
-            {{input value=stream.img.max class="contrast-field"}}
-          {{/if}}
-        </div>
-      </div>
-    </div>
-    <div id="custom-menu">
-      <div id="compute-button" class="ui small compact inverted icon bottom menu field-container">
-        <a class="ui dropdown {{if projBusy "disabled"}} item">
-          Colormap
-          <i class="dropdown icon"></i>
-          <div class="menu">
-            <span class="item" {{action "setCmap" 'Gray'}}>Gray</span>
-            <span class="item" {{action "setCmap" 'Jet'}}>Jet</span>
-            <span class="item" {{action "setCmap" 'Viridis'}}>Viridis</span>
-            <span class="item" {{action "setCmap" 'Plasma'}}>Plasma</span>
-            <span class="item" {{action "setCmap" 'Inferno'}}>Inferno</span>
-            <span class="item" {{action "setCmap" 'Magma'}}>Magma</span>
-            <span class="item" {{action "setCmap" 'Bone'}}>Bone</span>
-            <span class="item" {{action "setCmap" 'Pink'}}>Pink</span>
-            <span class="item" {{action "setCmap" 'Spring'}}>Spring</span>
-            <span class="item" {{action "setCmap" 'Summer'}}>Summer</span>
-            <span class="item" {{action "setCmap" 'Autumn'}}>Autumn</span>
-            <span class="item" {{action "setCmap" 'Winter'}}>Winter</span>
-            <span class="item" {{action "setCmap" 'Cool'}}>Cool</span>
-            <span class="item" {{action "setCmap" 'Hot'}}>Hot</span>
-            <span class="item" {{action "setCmap" 'Wistia'}}>Wistia</span>
-            <span class="item" {{action "setCmap" 'Purple-Green'}}>Purple-Green</span>
-            <span class="item" {{action "setCmap" 'Purple-Orange'}}>Purple-Orange</span>
-            <span class="item" {{action "setCmap" 'Red-Gray'}}>Red-Gray</span>
-            <span class="item" {{action "setCmap" 'Spectral'}}>Spectral</span>
-            <span class="item" {{action "setCmap" 'Cool-Warm'}}>Cool-Warm</span>
+        <div>
+          <div class="field-container">
+            {{#if stream.img.maxp}}
+              {{input value=stream.img.maxp_min class="contrast-field"}}
+            {{else if stream.img.meanp}}
+              {{input value=stream.img.meanp_min class="contrast-field"}}
+            {{else if stream.img.sump}}
+              {{input value=stream.img.sump_min class="contrast-field"}}
+            {{else}}
+              {{input value=stream.img.min class="contrast-field"}}
+            {{/if}}
           </div>
-        </a>
+        </div>
+        <div class="left-label">Max: </div>
+        <div class="max">
+          {{#if stream.img.maxp}}
+            {{input id="max-slider" type="range" min=0
+              max=255 value=stream.img.maxp_max}}
+          {{else if stream.img.meanp}}
+            {{input id="max-slider" type="range" min=0
+              max=255 value=stream.img.meanp_max}}
+          {{else if stream.img.sump}}
+            {{input id="max-slider" type="range" min=0
+              max=255 value=stream.img.sump_max}}
+          {{else}}
+            {{input id="max-slider" type="range" min=0
+              max=255 value=stream.img.max}}
+            {{/if}}
+        </div>
+        <div>
+          <div class="field-container">
+            {{#if stream.img.maxp}}
+              {{input value=stream.img.maxp_max class="contrast-field"}}
+            {{else if stream.img.meanp}}
+              {{input value=stream.img.meanp_max class="contrast-field"}}
+            {{else if stream.img.sump}}
+              {{input value=stream.img.sump_max class="contrast-field"}}
+            {{else}}
+              {{input value=stream.img.max class="contrast-field"}}
+            {{/if}}
+          </div>
+        </div>
+      </div>--}}
 
-        <a class="ui dropdown {{if projBusy "disabled"}} item">
-          Z-Projection{{!-- {{if stream.ch0HasMaxp "✓" "✗"}}--}}
-          <i class="dropdown icon"></i>
-          <div class="menu">
-            <div class="item" {{action "showProjection" "projection-prompt"}}>Initialize</div>
+      {{#ui-dropdown class="inverted item"}}
+        Colormap
+        <i class="dropdown icon"></i>
+        <div class="menu">
+          <span class="item" {{action "setCmap" 'Gray'}}>Gray</span>
+          <span class="item" {{action "setCmap" 'Jet'}}>Jet</span>
+          <span class="item" {{action "setCmap" 'Viridis'}}>Viridis</span>
+          <span class="item" {{action "setCmap" 'Plasma'}}>Plasma</span>
+          <span class="item" {{action "setCmap" 'Inferno'}}>Inferno</span>
+          <span class="item" {{action "setCmap" 'Magma'}}>Magma</span>
+          <span class="item" {{action "setCmap" 'Bone'}}>Bone</span>
+          <span class="item" {{action "setCmap" 'Pink'}}>Pink</span>
+          <span class="item" {{action "setCmap" 'Spring'}}>Spring</span>
+          <span class="item" {{action "setCmap" 'Summer'}}>Summer</span>
+          <span class="item" {{action "setCmap" 'Autumn'}}>Autumn</span>
+          <span class="item" {{action "setCmap" 'Winter'}}>Winter</span>
+          <span class="item" {{action "setCmap" 'Cool'}}>Cool</span>
+          <span class="item" {{action "setCmap" 'Hot'}}>Hot</span>
+          <span class="item" {{action "setCmap" 'Wistia'}}>Wistia</span>
+          <span class="item" {{action "setCmap" 'Purple-Green'}}>Purple-Green</span>
+          <span class="item" {{action "setCmap" 'Purple-Orange'}}>Purple-Orange</span>
+          <span class="item" {{action "setCmap" 'Red-Gray'}}>Red-Gray</span>
+          <span class="item" {{action "setCmap" 'Spectral'}}>Spectral</span>
+          <span class="item" {{action "setCmap" 'Cool-Warm'}}>Cool-Warm</span>
+        </div>
+      {{/ui-dropdown}}
 
-            {{#if stream.ch0HasMaxp}}
+      {{#ui-dropdown class="inverted item" action="hide"}}
+        Z-Projection
+        <i class="dropdown icon"></i>
+        <div class="menu">
+          <span class="item" {{action "showProjection" "projection-prompt"}}>Initialize</span>
+
+          {{#if stream.ch0HasMaxp}}
             <div class="item">
               <i class="dropdown icon"></i>
-              Max Projection
+              <span>Max Projection</span>
               <div class="menu">
-                <div class="item" {{action "overlayProjection" "max"}}>Overlay</div>
-                <div class="item" {{action "exportProjection" "max"}}>Export as Tiff</div>
+                <span class="item" {{action "overlayProjection" "max"}}>Overlay</span>
+                <span class="item" {{action "exportProjection" "max"}}>Export as Tiff</span>
               </div>
             </div>
-            {{/if}}
-            {{#if stream.ch0HasMeanp}}
+          {{/if}}
+          {{#if stream.ch0HasMeanp}}
             <div class="item">
               <i class="dropdown icon"></i>
-              Mean Projection
+              <span>Mean Projection</span>
               <div class="menu">
-                <div class="item" {{action "overlayProjection" "mean"}}>Overlay</div>
-                <div class="item" {{action "exportProjection" "mean"}}>Export as Tiff</div>
+                <span class="item" {{action "overlayProjection" "mean"}}>Overlay</span>
+                <span class="item" {{action "exportProjection" "mean"}}>Export as Tiff</span>
               </div>
             </div>
-            {{/if}}
-            {{#if stream.ch0HasSump}}
+          {{/if}}
+          {{#if stream.ch0HasSump}}
             <div class="item">
               <i class="dropdown icon"></i>
-              Sum Projection
+              <span>Sum Projection</span>
                 <div class="menu">
-                  <div class="item" {{action "overlayProjection" "sum"}}>Overlay</div>
-                  <div class="item" {{action "exportProjection" "sum"}}>Export as Tiff</div>
+                  <span class="item" {{action "overlayProjection" "sum"}}>Overlay</span>
+                  <span class="item" {{action "exportProjection" "sum"}}>Export as Tiff</span>
                 </div>
             </div>
-            {{/if}}
-          </div>
-        </a>
+          {{/if}}
+        </div>
+      {{/ui-dropdown}}
 
-        <a class="ui dropdown item">
-          Compute
-          <i class="dropdown icon"></i>
-          <div class="menu">
-            <span class="item" {{action "computeSelected"}}>Selected</span>
-            <span class="item" {{action "computeUncomputed"}}>Uncomputed</span>
-          </div>
-        </a>
+      {{#ui-dropdown class="inverted item" action="hide"}}
+        Compute
+        <i class="dropdown icon"></i>
+        <div class="menu">
+          <span class="item" {{action "computeSelected"}}>Selected</span>
+          <span class="item" {{action "computeUncomputed"}}>Uncomputed</span>
+        </div>
+      {{/ui-dropdown}}
 
+      {{#ui-dropdown}}
         <a class="item" {{action "loadJSONROIs"}}>
           Import
         </a>
-        <input type="file" id="roi-import" style="display: none" onchange={{action "importJSONROIs" "import-progress"}}/>
+      {{/ui-dropdown}}
 
-        {{#ui-modal name="import-progress" class="import-progress inverted" closable=false}}
-          <h2 class="progress-header">Importing ROIs</h2>
-          {{#ui-progress class="import-progress teal inverted indicating progress"}}
-            <div class="bar">
-              <div class="progress"></div>
-            </div>
-            <div id="progress-label" class="label"></div>
-          {{/ui-progress}}
-        {{/ui-modal}}
+      <input type="file" id="roi-import" style="display: none"
+        onchange={{action "importJSONROIs" "import-progress"}}/>
 
-        <a class="ui dropdown item">
-          Export
-          <i class="dropdown icon"></i>
-          <div class="menu">
-            <span class="item" {{action "exportExcel"}}>
-              Excel
-            </span>
-            <span class="item" {{action "exportMatlab"}}>
-              Matlab
-            </span>
-            <span class="item" {{action "exportJSONROIs"}}>
-              ROIs
-            </span>
+      {{#ui-modal name="import-progress" class="import-progress inverted" closable=false}}
+        <h2 class="progress-header">Importing ROIs</h2>
+        {{#ui-progress class="import-progress teal inverted indicating progress"}}
+          <div class="bar">
+            <div class="progress"></div>
           </div>
-        </a>
+          <div id="progress-label" class="label"></div>
+        {{/ui-progress}}
+      {{/ui-modal}}
 
-        <div class="item">
-          <span class={{if fbConnection "connected" "disconnected"}}>Connection Status</span>
+      {{#ui-dropdown class="inverted item" action="hide"}}
+        Export
+        <i class="dropdown icon"></i>
+        <div class="menu">
+          <span class="item" {{action "exportExcel"}}>
+            Excel
+          </span>
+          <span class="item" {{action "exportMatlab"}}>
+            Matlab
+          </span>
+          <span class="item" {{action "exportJSONROIs"}}>
+            ROIs
+          </span>
         </div>
-
-      </div>
-    </div>
-  </div> {{!-- End flexed div --}}
-  {{! End Addition }}
-
+      {{/ui-dropdown}}
+    </div> {{!-- End Menu --}}
+  </div>
 
   {{#ui-modal id="projection-prompt" class="projection-prompt" closable=false}}
     <i class="close icon"></i>
@@ -430,6 +440,7 @@
           initializeDbMonitor=(action "monitorFirebaseConnection")
           placeMode=placeMode
           curIndex=stream.img.curIndex
+          maxIndex=stream.img.maxIndex
           disableHandles=disableHandles
           neuropilEnabled=model.firebaseWorkspace.neuropil_enabled
           neuropilFactor=model.firebaseWorkspace.neuropil_factor
@@ -441,11 +452,19 @@
     {{! ROI Control }}
     <div class="four wide column roi-list-container">
       <h3>Neuropil Options</h3>
-      <li class="custom-li">{{#ui-checkbox id="custom" checked=model.firebaseWorkspace.neuropil_enabled onChange=(action (mut model.firebaseWorkspace.neuropil_enabled))}}
-        <label id="custom">Enable Neuropil Subtraction</label>
-      {{/ui-checkbox}}</li>
-      <li class="custom-li">{{input value=model.firebaseWorkspace.neuropil_factor class="contrast-field"}}<label id="custom">Neuropil Factor</label></li>
-      <li class="custom-li">{{input value=model.firebaseWorkspace.neuropil_ratio class="contrast-field"}}<label id="custom">Neuropil Ratio</label></li>
+      <div class="flex-container">
+        {{ui-checkbox label="Enable Neuropil Subtraction"
+          checked=model.firebaseWorkspace.neuropil_enabled
+          onChange=(action (mut model.firebaseWorkspace.neuropil_enabled))}}
+      </div>
+      <div class="flex-container">
+        {{input value=model.firebaseWorkspace.neuropil_factor class="contrast-field"}}
+        <label>Neuropil Factor</label>
+      </div>
+      <div class="flex-container">
+        {{input value=model.firebaseWorkspace.neuropil_ratio class="contrast-field"}}
+        <label>Neuropil Ratio</label>
+      </div>
       <h3>Shortcuts</h3>
       <li>"m" :  <span class={{if placeMode "active-mode"}}>Place Mode</span></li>
       <li>"d" :  <span class={{if disableHandles "active-mode"}}>Disable Handles</span></li>
@@ -492,32 +511,3 @@
 
 </div>
 
-<script>
-  $(document)
-    .ready(function() {
-      $('.ui.dropdown')
-        .dropdown()
-      ;
-    });
-</script>
-
-
-<style>
-.active-mode {
-  color: #77f442;
-}
-#route-sbx-analysis .roi.dropdown .menu .item {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-}
-#route-sbx-analysis .ui.dropdown .menu > .header {
-  font-style: italic;
-  margin: 0.25rem 0.5rem 0.25rem;
-}
-#stat {
-  height: 350px;
-}
-#compute-button {
-  margin-left: 5px;
-}
-</style>
