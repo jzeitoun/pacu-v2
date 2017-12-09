@@ -100,12 +100,11 @@ export default Controller.extend({
       this.toast.info('Computing any uncomputed ROIs...');
       var uncomputedROIs = this.get('roiRecord.uncomputed');
       this.send('computeROIs', uncomputedROIs);
-    },
-
+    }, 
     computeROIs(rois) {
       const store = this.get('store');
       const model = this.model
-      const workspace = this.model.firebaseWorkspace;
+      const workspace = this.model.workspace;
       var roiData = store.findAll('roi').then(result => {
         var roiDataObjects = result.toArray();
         var existingIDs = roiDataObjects.map(function(roi) {
