@@ -76,13 +76,17 @@ class ScanboxChannel(object):
         self.mmappath = self.path.join_suffixes('.mmap.npy')
         self.metapath = self.path.join_suffixes('.meta.json')
         self.cmap = colormaps['Gray']
-        self.blue_channel = np.zeros(self.shape[1:], dtype='uint8')
-        self.alpha_channel = np.full(self.shape[1:], 255, dtype='uint8')
         self.channel_display = 'Green'
         self.min_val = 0
         self.max_val = 255
         self.red_min_val = 0
         self.red_max_val = 255
+    @memoized_property
+    def blue_channel(self):
+        return np.zeros(self.shape[1:], dtype='uint8')
+    @memoized_property
+    def alpha_channel(self):
+        return np.full(self.shape[1:], 255, dtype='uint8')
     def scale(self, array):
         return (255 * (np.float64(array) - self.min_val)) / (self.max_val - self.min_val)
     def red_scale(self, array):
@@ -143,7 +147,7 @@ class ScanboxChannel(object):
         if self.channel_display == 'Green':
             return self.cmap8bit.to_rgba(self.mmap8bit[index], bytes=True).tostring()
         elif self.channel_display == 'Red':
-            return self.red_cmap8bit.to_rgba(self.red_mmap8bit[index], bytes=True).tostring()
+            return self.cmap8bit.to_rgba(self.red_mmap8bit[index], bytes=True).tostring()
         elif self.channel_display == 'Both':
             red_channel = self.red_scale(self.red_mmap8bit[index]).astype('uint8')
             green_channel = self.scale(self.mmap8bit[index]).astype('uint8')
@@ -185,16 +189,9 @@ class ScanboxChannel(object):
     def cmap8bit(self):
         return ScalarMappable(norm=self.norm, cmap=self.cmap)
     @property
-    def red_cmap8bit(self):
-        return ScalarMappable(norm=self.red_norm, cmap=self.cmap)
-    @property
     def norm(self):
         return Normalize(
             vmin=self.min_val, vmax=self.max_val)
-    @property
-    def red_norm(self):
-        return Normalize(
-            vmin=self.red_min_val, vmax=self.red_max_val)
     @memoized_property
     def dcmap(self):
         return DistortedColormap2('jet', xmid1=0.35, ymid1=0.65)

@@ -157,15 +157,11 @@
         Display
         <i class="dropdown icon"></i>
         <div class="menu">
-          <span class="active selected item" {{action "setChannel" "Green"}}>
-            Green
+          {{#each stream.img.channelOptions as |channel|}}
+          <span class="item" {{action "setChannel" channel}}>
+            {{channel}}
           </span>
-          <span class="item" {{action "setChannel" "Red"}}>
-            Red
-          </span>
-          <span class="item" {{action "setChannel" "Both"}}>
-            Both
-          </span>
+        {{/each}}
         </div>
       {{/ui-dropdown}}
 

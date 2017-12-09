@@ -15,7 +15,7 @@ const Image = EmberObject.extend({
   buffer: null,
   curIndex: 0,
   cmap: 'Gray', // added attribute (JZ)
-  channelDisplay: 'Green', // default to green channel
+  channelDisplay: null, // default to green channel
   showGreen: Ember.computed('channelDisplay', function() {
     if (this.get('channelDisplay') == 'Both' || this.get('channelDisplay') == 'Green') {
       return true;
@@ -57,7 +57,7 @@ export default Ember.Object.extend({
   invokeAsBinary(func, ...args) { return this.get('wsx').invokeAsBinary(func, ...args); },
   init() {
     this._super(...arguments);
-    this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump');
+    this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump', 'mat.channels');
   },
   // this requests frame from backend (JZ)
   // colormap is determined in backend
@@ -67,6 +67,31 @@ export default Ember.Object.extend({
     this.set('img.meanp', false);
     this.set('img.sump', false);
     this.setRGBContrast();
+    /* Ugly Workaround */
+    const channels = this.get('matChannels');
+    var channelSet = this.get('channelSet');
+    if ( (channels && !this.get('channelSet')) || (!channels && this.get('channelSet')) ) {
+      switch (channels) {
+        case 1 :
+          this.set('img.channelOptions', ['Green', 'Red', 'Both']);
+          this.set('img.channelDisplay', 'Green');
+          this.set('channelSet', true);
+          break;
+        case 2 :
+          this.set('img.channelOptions', ['Green']);
+          this.set('img.channelDisplay', 'Green');
+          this.set('channelSet', true);
+          break;
+        case 3 :
+          this.set('img.channelOptions', ['Red']);
+          this.set('img.channelDisplay', 'Red');
+          this.set('channelSet', true);
+          break;
+        default :
+          return;
+      };
+    };
+      /* End Ugly Workaround */
     console.log('frame requested');
     var ch = this.get('img.channel');
     return this.get('wsx').invokeAsBinary(
@@ -150,26 +175,27 @@ export default Ember.Object.extend({
   }),
 
   overlayProjection(image_type) {
-    //this.set('img.meanp', false);
-    //this.set('img.maxp', false);
-    //this.set('img.sump', false);
-    //switch (image_type) ({
-    //  case 'max':
-    //    this.set('img.maxp', true);
-    //    this.setRGBContrast();
-    //    break;
-    //  case 'mean':
-    //    this.set('img.meanp', true);
-    //    this.setRGBContrast();
-    //    break;
-    //  case 'sum':
-    //    this.set('img.sump', true);
-    //    this.setRGBContrast();
-    //    break;
-    //  default:
-    //    return;
-    //};
+    this.set('img.meanp', false);
+    this.set('img.maxp', false);
+    this.set('img.sump', false);
+    switch (image_type) {
+      case 'max':
+        this.set('img.maxp', true);
+        this.setRGBContrast();
+        break;
+      case 'mean':
+        this.set('img.meanp', true);
+        this.setRGBContrast();
+        break;
+      case 'sum':
+        this.set('img.sump', true);
+        this.setRGBContrast();
+        break;
+      default:
+        return;
+    };
     this.set('img.channelDisplay', 'Green');
+    this.set('projection', true);
     this.get('wsx').invokeAsBinary('ch0.request_projection', image_type).then(buffer => {
       this.set('img.buffer', buffer);
     });
