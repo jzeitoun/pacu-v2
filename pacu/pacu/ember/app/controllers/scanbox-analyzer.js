@@ -99,6 +99,7 @@ export default Controller.extend({
     computeUncomputed() {
       this.toast.info('Computing any uncomputed ROIs...');
       var uncomputedROIs = this.get('roiRecord.uncomputed');
+      debugger;
       this.send('computeROIs', uncomputedROIs);
     }, 
     computeROIs(rois) {

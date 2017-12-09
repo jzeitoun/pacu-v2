@@ -7,8 +7,8 @@ export default Service.extend({
   unselected: computed.filterBy('all', 'selected', false),
   computed: computed.filter('all.@each.{polygon,lastComputedPolygon}', function(roi, index, array) {
     return roi.get('polygon') == roi.get('lastComputedPolygon');
-  }),
+  }).volatile(),
   uncomputed: computed.filter('all.@each.{polygon,lastComputedPolygon}', function(roi, index, array) {
-    return roi.get('polygon') != roi.get('lastComputedPolygon');
-  }),
+    return roi.get('polygon') != roi.get('lastComputedPolygon')
+  }).volatile(),
 });
