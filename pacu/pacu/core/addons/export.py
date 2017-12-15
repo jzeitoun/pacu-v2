@@ -181,9 +181,9 @@ class Export(object):
                 cell.style = header
 
             for idx,roi in zip(idx_list, filtered_rois):
-                peak_sf = round(roi.dtsfreqfits[0].attributes['value']['peak'],2)
+                peak_sf = round(roi.dtsfreqfits.filter_by(trial_tf=tfreq).first.attributes['value']['peak'],2)
                 try:
-                    if roi.dtanovaeachs.filter_by(trial_sf=peak_sf)[0].p <= p_value:
+                    if roi.dtanovaeachs.filter_by(trial_tf=tfreq).filter_by(trial_sf=peak_sf).first.p <= p_value:
                         style = sig_cell
                     else:
                         style = reg_cell

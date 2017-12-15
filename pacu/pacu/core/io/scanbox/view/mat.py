@@ -108,12 +108,10 @@ class ScanboxMatView(ZeroDimensionArrayView):
     @property
     def focal_pane_args(self):
         try:
-            print('otparam:', self.otparam)
             if self.volscan:
                 _, _, n = map(int, self.otparam)
             else:
                 n = 1
-            print n
         except:
             n = 1
         try:
