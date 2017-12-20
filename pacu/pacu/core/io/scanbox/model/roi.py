@@ -23,6 +23,8 @@ def serialize(o):
         return {str(key): serialize(val) for key, val in o.items() if val is not None}
     elif isinstance(o, (list, tuple)):
         return [serialize(item) for item in o]
+    elif hasattr(o, 'toAltDict'):
+        return serialize(o.toAltDict())
     elif hasattr(o, 'toDict'):
         return serialize(o.toDict())
     elif hasattr(o, '__dict__'):
@@ -176,6 +178,24 @@ class ROI(SQLite3Base):
         value = self.dtsfreqfits.filter_by(trial_contrast=contrast).first.value
         io.savemat(sio, value)
         return sio.getvalue()
+    def toAltDict(self):
+        resobj = dict(
+            type=self.__tablename__,
+            id=self.id,
+            attributes=self.attributes,
+            relationships=self.relationships,
+            dff0s=self.dttrialdff0s,
+            dtorientationsmeans=self.dtorientationsmeans,
+            dtorientationbestprefs=self.dtorientationbestprefs,
+            dtorientationsfits=self.dtorientationsfits,
+            dtanovaeachs=self.dtanovaeachs,
+            dtsfreqfits=self.dtsfreqfits,
+            dtanovaalls=self.dtanovaalls,
+            condition=self.workspace.condition
+            )
+        if hasattr(self, 'meta'):
+            resobj['attributes']['meta'] = self.meta
+        return resobj
     def serialize(self):
         return serialize(self)
 
