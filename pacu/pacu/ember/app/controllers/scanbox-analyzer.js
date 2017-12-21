@@ -139,7 +139,7 @@ export default Controller.extend({
           //setTimeout(function() { modal.modal('hide'); }, 2000);
       });
 
-      function fillRecordGap(roi) {
+      var fillRecordGap = (roi) => {
         // First check if entry exists in backend
         return store.findRecord('roi', roi.get('roi_id')).then(roiData => {
           // If entry exists, compute the ROI
@@ -157,22 +157,23 @@ export default Controller.extend({
             'neuropil_ratio': model.firebaseWorkspace.get('neuropil_ratio'),
             'neuropil_factor': model.firebaseWorkspace.get('neuropil_factor')
           });
-          roiData.save();
-          return store.createRecord('action', {
-            model_name: 'ROI',
-            model_id: roiData.id,
-            action_name: 'refresh_all'
-          }).save().then((action) => {
-            if (action.get('status_code') === 500) {
-              //console.log(`ROI ${roiData.id} returned an error.`);
-              //this.get('toast').error(action.get('status_text'));
-              roi.set('lastComputedPolygon', '');
-              return roi.save();
-            } else {
-              //console.log(`Finished computing ${roiData.id}`)
-              roi.set('lastComputedPolygon', roi.get('polygon'));
-              return roi.save();
-            };
+          return roiData.save().then(() => {
+            return store.createRecord('action', {
+              model_name: 'ROI',
+              model_id: roiData.id,
+              action_name: 'refresh_all'
+            }).save().then((action) => {
+              if (action.get('status_code') === 500) {
+                this.get('toast').error(action.get('status_text'));
+                this.get('toast').error(`ROI ${roiData.id} returned an error.`);
+                roi.set('lastComputedPolygon', '');
+                return roi.save();
+              } else {
+                //console.log(`Finished computing ${roiData.id}`)
+                roi.set('lastComputedPolygon', roi.get('polygon'));
+                return roi.save();
+              };
+            });
           });
         }).catch(error => {
           // If entry does not exist, add entry and then call function again
