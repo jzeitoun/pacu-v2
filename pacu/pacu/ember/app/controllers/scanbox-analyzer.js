@@ -58,7 +58,20 @@ export default Controller.extend({
 
     deleteROI(roi) {
       roi.deleteRecord();
-      roi.save()
+      roi.save().then(() => {
+        var remainingROIs = this.get('roiRecord.all');
+        var remainingIDs = remainingROIs.map(function(roi) {
+          return roi.get('roi_id');
+        })
+        if (remainingIDs.length) {
+          var maxID = remainingIDs.reduce(function(a, b) {
+            return Math.max(a, b);
+          });
+        } else {
+          var maxID = 0;
+        };
+        this.model.file.set('roi_count', maxID);
+      });
     },
 
     deselectAll() {
