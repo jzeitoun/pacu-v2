@@ -15,7 +15,7 @@ const Image = EmberObject.extend({
   buffer: null,
   curIndex: 0,
   cmap: 'Gray', // added attribute (JZ)
-  channelDisplay: null, // default to green channel
+  channelDisplay: null,
   showGreen: Ember.computed('channelDisplay', function() {
     if (this.get('channelDisplay') == 'Both' || this.get('channelDisplay') == 'Green') {
       return true;
@@ -45,7 +45,7 @@ const Image = EmberObject.extend({
   }),
 });
 
-export default Ember.Object.extend({
+export default EmberObject.extend({
   img: computed('ch0Dimension', function() {
     var ch = this.get('ch0Dimension');
     return Image.create(ch);
@@ -58,6 +58,13 @@ export default Ember.Object.extend({
   init() {
     this._super(...arguments);
     this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump', 'mat.channels');
+    Ember.run.later(this, 'setChannelOptions', 100);
+    const keysToObserve = ['min','max','red_min','red_max'];
+    keysToObserve.forEach(key => {
+      Ember.run.later(this, () => this.addObserver(`img.${key}`, this, 'contrastChanged'), 100);
+    });
+    Ember.run.later(this, () => this.addObserver('img.cmap', this, 'cmapChanged'), 100);
+    Ember.run.later(this, () => this.addObserver('img.channelDisplay', this, 'channelChanged'), 100);
   },
   // this requests frame from backend (JZ)
   // colormap is determined in backend
@@ -67,6 +74,15 @@ export default Ember.Object.extend({
     this.set('img.meanp', false);
     this.set('img.sump', false);
     this.setRGBContrast();
+    console.log('frame requested');
+    var ch = this.get('img.channel');
+    return this.get('wsx').invokeAsBinary(
+        'ch0.request_frame', parseInt(index)).then(buffer => { console.log('frame received');
+      this.set('img.buffer', buffer);
+    }).catch(reason => { console.log(reason); });
+  },
+
+  setChannelOptions() {
     /* Ugly Workaround */
     const channels = this.get('matChannels');
     var channelSet = this.get('channelSet');
@@ -92,12 +108,6 @@ export default Ember.Object.extend({
       };
     };
       /* End Ugly Workaround */
-    console.log('frame requested');
-    var ch = this.get('img.channel');
-    return this.get('wsx').invokeAsBinary(
-        'ch0.request_frame', parseInt(index)).then(buffer => { console.log('frame received');
-      this.set('img.buffer', buffer);
-    }).catch(reason => { console.log(reason); });
   },
 
   requestProjection(image_type) {
@@ -144,32 +154,63 @@ export default Ember.Object.extend({
   },
 
   indexChanged: observer('img.curIndex', function() {
-    this.setRGBContrast();
+    console.log('index changed');
+    //this.setRGBContrast();
     this.requestFrame(this.get('img.curIndex'));
   }),
-  channelChanged: observer('img.channelDisplay', function() {
-    this.setRGBContrast();
+  //channelChanged: observer('img.channelDisplay', function() {
+  //  console.log('channel changed');
+  //  //this.setRGBContrast();
+  //  this.get('wsx').invokeAsBinary(
+  //    'ch0.set_channel', this.get('img.channelDisplay')
+  //  );
+  //  this.requestFrame(this.get('img.curIndex'));
+  //}),
+  //cmapChanged: observer('img.cmap', function() {
+  //  console.log('cmap changed');
+  //  this.setCmap(this.get('img.cmap')); // added cmap argument JZ
+  //  if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
+  //    this.requestProjection(this.get('img.projection'));
+  //  } else {
+  //    this.requestFrame(this.get('img.curIndex'));
+  //  };
+  //}),
+  //contrastChanged: observer('img.{min,max,red_min,red_max}', function() {
+  //  console.log('contrast changed');
+  //  //this.setRGBContrast();
+  //  if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
+  //    Ember.run.debounce(this, () => this.requestProjection(this.get('img.projection')), 150);
+  //  } else {
+  //    Ember.run.debounce(this, () => this.requestFrame(this.get('img.curIndex')), 150);
+  //  };
+  //}),
+  channelChanged: function() {
+    console.log('channel changed');
+    //this.setRGBContrast();
     this.get('wsx').invokeAsBinary(
       'ch0.set_channel', this.get('img.channelDisplay')
     );
     this.requestFrame(this.get('img.curIndex'));
-  }),
-  cmapChanged: observer('img.cmap', function() {
+  },
+  cmapChanged: function() {
+    console.log('cmap changed');
     this.setCmap(this.get('img.cmap')); // added cmap argument JZ
     if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
       this.requestProjection(this.get('img.projection'));
     } else {
       this.requestFrame(this.get('img.curIndex'));
     };
-  }),
-  contrastChanged: observer('img.{min,max,red_min,red_max,maxp_min,maxp_max,meanp_min,meanp_max,sump_min,sump_max}', function() {
-    this.setRGBContrast();
+  },
+  contrastChanged: function() {
+    console.log('contrast changed');
+    //this.setRGBContrast();
     if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
       Ember.run.debounce(this, () => this.requestProjection(this.get('img.projection')), 150);
     } else {
       Ember.run.debounce(this, () => this.requestFrame(this.get('img.curIndex')), 150);
     };
-  }),
+  },
+
   mainCanvasDimension: computed(function() {
     return { height: 0 };
   }),
@@ -181,15 +222,15 @@ export default Ember.Object.extend({
     switch (image_type) {
       case 'max':
         this.set('img.maxp', true);
-        this.setRGBContrast();
+        //this.setRGBContrast();
         break;
       case 'mean':
         this.set('img.meanp', true);
-        this.setRGBContrast();
+        //this.setRGBContrast();
         break;
       case 'sum':
         this.set('img.sump', true);
-        this.setRGBContrast();
+        //this.setRGBContrast();
         break;
       default:
         return;

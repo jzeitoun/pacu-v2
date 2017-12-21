@@ -332,7 +332,11 @@ span.disconnected {
 }
 
 span.connected {
-  color: lime;
+  color: #27ff00; /* lime */
+}
+
+span.active-mode {
+  color: #27ff00; /* lime */
 }
 
 /*.dot {

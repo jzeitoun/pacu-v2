@@ -74,7 +74,9 @@ export default Ember.Component.extend({
       'placeMode',
       'roiPrototype.{radius,numPoints}',
       'roiPrototype.centroid.{x,y}',
-    function() { this.updatePrototype(); }
+    function() {
+      this.updatePrototype();
+    }
   ),
 
   actions: {

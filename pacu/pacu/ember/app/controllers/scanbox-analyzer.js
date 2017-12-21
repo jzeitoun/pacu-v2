@@ -59,6 +59,7 @@ export default Controller.extend({
     deleteROI(roi) {
       roi.deleteRecord();
       roi.save().then(() => {
+        // Set count to max ID after deleting
         var remainingROIs = this.get('roiRecord.all');
         var remainingIDs = remainingROIs.map(function(roi) {
           return roi.get('roi_id');
