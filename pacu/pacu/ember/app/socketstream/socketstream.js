@@ -112,6 +112,7 @@ export default EmberObject.extend({
 
   requestProjection(image_type) {
     console.log('requested projection');
+    this.setRGBContrast();
     return this.get('wsx').invokeAsBinary(
         'ch0.request_projection', image_type).then(buffer => { console.log('projection received');
       this.set('img.buffer', buffer);
