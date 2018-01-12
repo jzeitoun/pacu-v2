@@ -194,6 +194,8 @@ export default Controller.extend({
 
           return newRecord.save().then(() => {
             return fillRecordGap(roi);
+          }).catch(error => {
+            debugger;
           });
         });
       }

@@ -18,8 +18,25 @@ def main(workspace, condition, roi, datatag, dff0s=None, fits=None):
     bls = dff0s.filter_by(trial_blank=True)
     fls = dff0s.filter_by(trial_flicker=True)
     sf_rmax_set = [(dt.trial_sf, dt.value['r_max']) for dt in dts]
-    blank = np.nanmean(np.array([[bl.value['on'][pane_offset::n_panes]] for bl in bls]), axis=0).mean()
-    flicker = np.nanmean(np.array([[fl.value['on'][pane_offset::n_panes]] for fl in bls]), axis=0).mean()
+
+    # Adding for situations where blank/flicker was forgotten (JZ)
+    reps = condition.repetition
+    num_trials = len(dff0s)
+
+    if not bls:
+        blank_trial_indices = random.sample(xrange(0, num_trials), reps)
+        bls = [dff0s[i] for i in random_trial_indices]
+        blank = np.nanmean(np.array([[bl.value['off'][pane_offset::n_panes]] for bl in bls]), axis=0).mean()
+    else:
+        blank = np.nanmean(np.array([[bl.value['on'][pane_offset::n_panes]] for bl in bls]), axis=0).mean()
+
+    if not fls:
+        flicker_trial_indices = random.sample(xrange(0, num_trials), reps)
+        fls = [dff0s[i] for i in random_trial_indices]
+        flicker = np.nanmean(np.array([[fl.value['off'][pane_offset::n_panes]] for fl in fls]), axis=0).mean()
+    else:
+        flicker = np.nanmean(np.array([[fl.value['on'][pane_offset::n_panes]] for fl in fls]), axis=0).mean()
+
     fit = SpatialFrequencyDogFit(sf_rmax_set, flicker, blank)
     return fit.toDict()
 

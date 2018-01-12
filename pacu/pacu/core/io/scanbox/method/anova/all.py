@@ -28,8 +28,25 @@ def main(workspace, condition, roi, datatag, dff0s=None):
 
     bls = dff0s.filter_by(trial_blank=True)
     fls = dff0s.filter_by(trial_flicker=True)
-    flicker = [np.nanmean(np.array(f.value['on'][pane_offset::n_panes])) for f in fls]
-    blank = [np.nanmean(np.array(b.value['on'][pane_offset::n_panes])) for b in bls]
+
+    # Adding for situations where blank/flicker was forgotten (JZ)
+    reps = condition.repetition
+    num_trials = len(dff0s)
+
+    if not bls:
+        blank_trial_indices = random.sample(xrange(0, num_trials), reps)
+        bls = [dff0s[i] for i in random_trial_indices]
+        blank = [np.nanmean(np.array(b.value['off'][pane_offset::n_panes])) for b in bls]
+    else:
+        blank = [np.nanmean(np.array(b.value['on'][pane_offset::n_panes])) for b in bls]
+
+    if not fls:
+        flicker_trial_indices = random.sample(xrange(0, num_trials), reps)
+        fls = [dff0s[i] for i in random_trial_indices]
+        flicker = [np.nanmean(np.array(f.value['off'][pane_offset::n_panes])) for f in fls]
+    else:
+        flicker = [np.nanmean(np.array(f.value['on'][pane_offset::n_panes])) for f in fls]
+
     if datatag.trial_tf:
         all_trials = dff0s.filter_by(
             trial_contrast=datatag.trial_contrast,
