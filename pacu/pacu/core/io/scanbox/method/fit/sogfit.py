@@ -3,6 +3,7 @@ from collections import namedtuple
 import numpy as np
 from scipy import optimize
 from scipy.interpolate import interp1d
+import random
 
 from pacu.util.prop.memoized import memoized_property
 
