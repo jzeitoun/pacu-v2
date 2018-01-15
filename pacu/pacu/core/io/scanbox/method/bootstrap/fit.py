@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import scikits.bootstrap as bootstrap
+import random
 
 from pacu.core.io.scanimage import util
 from pacu.core.io.scanbox.method.fit.sogfit import SumOfGaussianFit

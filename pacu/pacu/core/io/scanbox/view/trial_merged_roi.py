@@ -39,17 +39,23 @@ class TrialMergedROIView(object):
     r.refresh() # recompute every datatag
     """
     exc_no_roi = 'One of workspaces does not have an ROI with id {.roi_id}'
-    def __init__(self, roi_id, *workspaces):
+    def __init__(self, roi_id, version=2, *workspaces):
         self.roi_id = roi_id
         self.workspaces = workspaces
         self.workspace = self.workspaces[0]
         self.condition = self.workspace.condition
+        self.version = version
         self.rois = self.collect_rois()
     def collect_rois(self):
-        try: return [
-            #ws.rois.filter_by(id=self.roi_id)[0] modifed by JZ to allow merging on cell id
-            ws.rois.filter_by(params={'cell_id': str(self.roi_id)})[0]
-            for ws in self.workspaces]
+        try:
+            if self.version == 1:
+                return [
+                    ws.rois.filter_by(params={'cell_id': str(self.roi_id)})[0]
+                for ws in self.workspaces]
+            elif self.version == 2:
+                return [
+                    ws.rois.filter_by(id=self.roi_id)[0]
+                for ws in self.workspaces]
         except: raise Exception(self.exc_no_roi.format(self))
     @memoized_property
     def dff0s(self):

@@ -5,6 +5,7 @@ from scipy import interpolate
 from matplotlib import pyplot as plt
 from cStringIO import StringIO
 import numpy as np
+import random
 
 from pacu.core.io.scanimage import util
 

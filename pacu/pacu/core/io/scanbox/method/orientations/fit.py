@@ -1,6 +1,7 @@
 __package__ = '' # unicode package name error
 
 import numpy as np
+import random
 
 from pacu.core.io.scanimage import util
 from pacu.core.io.scanbox.method.fit.sogfit import SumOfGaussianFit

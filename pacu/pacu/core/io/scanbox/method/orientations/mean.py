@@ -2,6 +2,7 @@ __package__ = '' # unicode package name error
 
 import functools
 import numpy as np
+import random
 
 def main(workspace, condition, roi, datatag, dff0s=None):
     if not dff0s:

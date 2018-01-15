@@ -1,6 +1,7 @@
 __package__ = '' # unicode package name error
 
 import numpy as np
+import random
 
 from pacu.core.io.scanbox.method.fit.dogfit import SpatialFrequencyDogFit
 # did you sort datatag?
@@ -19,21 +20,22 @@ def main(workspace, condition, roi, datatag, dff0s=None, fits=None):
     fls = dff0s.filter_by(trial_flicker=True)
     sf_rmax_set = [(dt.trial_sf, dt.value['r_max']) for dt in dts]
 
-    # Adding for situations where blank/flicker was forgotten (JZ)
+    # If blank/flicker conditions are absent, off periods from random
+    # set of trials is used (JZ)
     reps = condition.repetition
     num_trials = len(dff0s)
 
     if not bls:
         blank_trial_indices = random.sample(xrange(0, num_trials), reps)
-        bls = [dff0s[i] for i in random_trial_indices]
-        blank = np.nanmean(np.array([[bl.value['off'][pane_offset::n_panes]] for bl in bls]), axis=0).mean()
+        bls = [dff0s[i] for i in blank_trial_indices]
+        blank = np.nanmean(np.array([[bl.value['baseline'][pane_offset::n_panes]] for bl in bls]), axis=0).mean()
     else:
         blank = np.nanmean(np.array([[bl.value['on'][pane_offset::n_panes]] for bl in bls]), axis=0).mean()
 
     if not fls:
         flicker_trial_indices = random.sample(xrange(0, num_trials), reps)
-        fls = [dff0s[i] for i in random_trial_indices]
-        flicker = np.nanmean(np.array([[fl.value['off'][pane_offset::n_panes]] for fl in fls]), axis=0).mean()
+        fls = [dff0s[i] for i in flicker_trial_indices]
+        flicker = np.nanmean(np.array([[fl.value['baseline'][pane_offset::n_panes]] for fl in fls]), axis=0).mean()
     else:
         flicker = np.nanmean(np.array([[fl.value['on'][pane_offset::n_panes]] for fl in fls]), axis=0).mean()
 
