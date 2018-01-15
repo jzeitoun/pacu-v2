@@ -178,6 +178,9 @@ class ScanboxIO(object):
     def export_matlab(self, ids, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).matlab()
+    def export_both(self, ids, wsName):
+        active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
+        return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
 
 def open_sqlite(path):
     return schema.get_sessionmaker(path, echo=False)

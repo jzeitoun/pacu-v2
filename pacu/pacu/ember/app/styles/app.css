@@ -88,6 +88,12 @@ h2:first-child {
   background: transparent;
 }
 
+
+.ui.export-progress.modal {
+  padding: 0.5rem;
+  background: transparent;
+}
+
 #progress-label {
   color: #FFFFFF;
 }
@@ -337,6 +343,34 @@ span.connected {
 
 span.active-mode {
   color: #27ff00; /* lime */
+}
+
+.modal-container {
+  background: none;
+  position: absolute;
+  height: 10rem;
+  width: 100%;
+  margin: auto;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.loader {
+    border: 10px solid #767676; /* Grey */
+    border-top: 10px solid #FFFFFF; /* White */
+    border-radius: 50% !important;
+    width: 120px;
+    height: 120px;
+    animation: spin 0.6s linear infinite;
+    position: relative;
+    margin: auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /*.dot {

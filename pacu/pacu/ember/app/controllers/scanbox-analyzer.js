@@ -264,14 +264,19 @@ export default Controller.extend({
       const {io, ws} = this.model.name;
       const fname = io.split('.')[0];
       const ids = [];
+      const toast = this.toast;
       for (var i=0; i<computedROIs.length; i++) {
         ids.push(computedROIs[i].get('roi_id'));
       }
-      this.toast.info(`Exporting data as Excel...`);
+      const modal = $('.ui.export-progress.modal');
+      modal.modal('show');
       this.model.stream.invokeAsBinary('export_excel', ids.join(), ws).then(data => {
         const ts = (new Date).toCustomString();
         download.fromArrayBuffer(data, `${fname}-${ws}-${ts}.xlsx`, 'application/json');
-      }).catch(reason => { debugger; });
+        modal.modal('hide');
+      }).catch(reason => {
+        modal.modal('hide');
+        toast.error(reason); });
     },
 
     exportMatlab() {
@@ -279,14 +284,38 @@ export default Controller.extend({
       const {io, ws} = this.model.name;
       const fname = io.split('.')[0];
       const ids = [];
+      const toast = this.toast;
       for (var i=0; i<computedROIs.length; i++) {
         ids.push(computedROIs[i].get('roi_id'));
       }
-      this.toast.info(`Exporting data as Matlab structure...`);
+      const modal = $('.ui.export-progress.modal');
+      modal.modal('show');
       this.model.stream.invokeAsBinary('export_matlab', ids.join(), ws).then(data => {
         const ts = (new Date).toCustomString();
         download.fromArrayBuffer(data, `${fname}-${ws}-${ts}.mat`, 'application/json');
-      }).catch(reason => { debugger; });
+      }).catch(reason => {
+        modal.modal('hide');
+        toast.error(reason); });
+    },
+
+    exportBoth() {
+      var computedROIs = this.get('roiRecord').get('computed');
+      const {io, ws} = this.model.name;
+      const fname = io.split('.')[0];
+      const ids = [];
+      const toast = this.toast;
+      for (var i=0; i<computedROIs.length; i++) {
+        ids.push(computedROIs[i].get('roi_id'));
+      }
+      const modal = $('.ui.export-progress.modal');
+      modal.modal('show');
+      this.model.stream.invokeAsBinary('export_both', ids.join(), ws).then(data => {
+        const ts = (new Date).toCustomString();
+        download.fromArrayBuffer(data, `${fname}-${ws}-${ts}.zip`, 'application/json');
+        modal.modal('hide');
+      }).catch(reason => {
+        modal.modal('hide');
+        toast.error(reason); });
     },
 
     exportJSONROIs() {
