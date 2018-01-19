@@ -39,12 +39,13 @@ class Export(object):
     def both(self):
         # Create in-memory zipfile
         zstring = StringIO()
-        zfile = zipfile.ZipFile(zstring, 'w', compression=zipfile.ZIP_DEFLATED)
+        zfile = zipfile.ZipFile(zstring, 'w')
         matlab_file = self.matlab()
         excel_file = self.excel()
         # Write files to in-memory zipfile
         zfile.writestr('data.xlsx', excel_file)
         zfile.writestr('data.mat', matlab_file)
+        zfile.close()
         return zstring.getvalue()
 
     def matlab(self):
