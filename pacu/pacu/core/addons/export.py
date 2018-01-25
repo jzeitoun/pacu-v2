@@ -8,14 +8,14 @@ from openpyxl import Workbook
 from openpyxl.styles import NamedStyle, PatternFill, Border, Side, Alignment, Protection, Font
 
 class Export(object):
-    def __init__(self, io, ws, condition, ids, rois):
+    def __init__(self, io, ws, condition, ids): #, rois):
         self.io = io
         self.ws = ws
         self.condition = condition
         self.flicker = any([trial['flicker'] for trial in self.condition.trial_list])
         self.blank = any([trial['blank'] for trial in self.condition.trial_list])
         self.ids = map(int, ids.split(','))
-        self.rois = rois
+        self.rois = self.io.condition.workspaces.filter_by(name=self.ws)[0].rois
         self.roi_dict = {'{}{}'.format('cell_id_', roi.id) : roi.serialize() for roi in self.rois}
 
     def blank_responses(self, roi):
@@ -53,7 +53,7 @@ class Export(object):
         # providing filename and workspace name as list to maintain compatibility
         # with post analysis scripts
         ########################################
-        merged_dict['filenames'] = [str(self.io)]
+        merged_dict['filenames'] = [str(self.io.path)]
         merged_dict['workspaces'] = [str(self.ws)]
         ########################################
         merged_dict['rois'] = self.roi_dict
