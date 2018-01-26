@@ -174,13 +174,16 @@ class ScanboxIO(object):
                     print 'ERROR', e
     def export_excel(self, ids, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
-        return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).excel()
+        #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).excel()
+        return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).excel()
     def export_matlab(self, ids, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
-        return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).matlab()
+        #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).matlab()
+        return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).matlab()
     def export_both(self, ids, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
-        return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
+        #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
+        return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).both()
 
 def open_sqlite(path):
     return schema.get_sessionmaker(path, echo=False)
