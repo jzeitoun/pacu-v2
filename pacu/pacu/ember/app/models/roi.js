@@ -10,13 +10,11 @@ export default DS.Model.extend({
     this._super(...arguments);
     const cid = this.get('id');
     const params = this.get('params');
-    debugger;
     if (params.hasOwnProperty('params') || !(cid == params.cell_id)) {
     //if(Ember.isNone(this.get('params.cell_id'))) {
       //const cid = this.get('id');
       //const params = this.get('params');
       //this.set('params', { params, cell_id: cid });
-      debugger;
       this.set('params', {cell_id: cid});
       this.save();
     }
