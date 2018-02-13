@@ -39,7 +39,7 @@ class Export(object):
     def both(self):
         # Create in-memory zipfile
         zstring = StringIO()
-        zfile = zipfile.ZipFile(zstring, 'w')
+        zfile = zipfile.ZipFile(zstring, 'w', allowZip64 = True)
         matlab_file = self.matlab()
         excel_file = self.excel()
         # Write files to in-memory zipfile
