@@ -46,6 +46,10 @@ def converter(index_set):
         globe.sink[idx] = ~globe.source[idx]
         globe.sink[idx][globe.sink[idx]==65535] = 0 # To ensure alignment margins are black
 
+def alt_converter(index_set):
+    for idx in index_set:
+        globe.sink[idx] = globe.source[idx]
+
 class ScanboxChannelMeta(object):
     __repr__ = repr.auto_strict
     def __init__(self, dtype, z, y, x):
@@ -124,7 +128,8 @@ class ScanboxChannel(object):
 
         process_pool = multiprocessing.Pool(1)
         print 'Data contains {} channels and {} frames per channel'.format(io.mat.nchannels, depth)
-        for i,_ in enumerate(process_pool.imap_unordered(converter, index_sets), 1):
+        func = converter if not 'converted_tif' in self.path.str else alt_converter
+        for i,_ in enumerate(process_pool.imap_unordered(func, index_sets), 1):
             mem_pct = p.memory_percent()
             if mem_pct > 75:
                 raise MemoryError('Too much memory used. Process aborted.')

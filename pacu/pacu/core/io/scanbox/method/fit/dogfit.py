@@ -2,6 +2,11 @@ import base64
 from collections import namedtuple
 from scipy import optimize
 from scipy import interpolate
+
+# prevent trying to stream figure through X11
+import matplotlib
+matplotlib.use('Agg')
+
 from matplotlib import pyplot as plt
 from cStringIO import StringIO
 import numpy as np

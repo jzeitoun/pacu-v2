@@ -4,6 +4,8 @@ import { inject as service } from '@ember/service';
 import download from 'pacu-v2/utils/download';
 import batch from 'pacu-v2/utils/batch';
 import firebase from 'firebase';
+import { all } from 'rsvp';
+import { later } from '@ember/runloop';
 
 const { getOwner } = Ember;
 
@@ -345,7 +347,7 @@ export default Controller.extend({
     importJSONROIs(name, e) {
       var dataFile = e.target.files[0];
       // open import progress modal
-      const route = this;
+      const controller = this;
       const fr = new FileReader();
       const modal = $('.ui.' + name + '.modal');
       const progressBar = $('.ui.' + name + '.progress');
@@ -363,29 +365,21 @@ export default Controller.extend({
         var ids = data.map(function(roi) {
           return roi.roi_id;
         });
-        var maxID = ids.reduce(function(a, b) {
-          return Math.max(a, b);
-        });
-        route.model.file.set('roi_count', maxID);
-        route.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
-        var i = data.length;
-        // ROI creation produces promises, which can lead to a crash when running
-        // too many concurrently. Using reduce will call them sequentially.
-        data.reduce(function(cur, roi) {
-          return cur.then(function() {
-            roi.created = firebase.database.ServerValue.TIMESTAMP;
-            roi.lastComputedPolygon = "";
-            var newROI = route.get('store').createRecord('fb-roi', roi);
-            route.model.firebaseWorkspace.get('rois').addObject(newROI);
-            return newROI.save().then(result => {
-              var message = `ROI ${newROI.get('roi_id')} imported.`;
-              return route.model.firebaseWorkspace.save().then(() => {
-                progressBar.progress('increment', 1);
-              });
-            });
+        var maxID = Math.max(...ids);
+        controller.model.file.set('roi_count', maxID);
+        controller.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
+        const newROIs = data.map(roi => controller.get('store').createRecord('fb-roi', roi));
+        const promises = newROIs.map(roi => {
+          return roi.save().then(roi => {
+            progressBar.progress('increment', 1);
+            return roi;
           });
-        }, Ember.RSVP.resolve()).then(function() {
-          setTimeout(function() { modal.modal('hide'); }, 2000);
+        });
+        all(promises).then(rois => {
+          controller.model.firebaseWorkspace.get('rois').addObjects(rois);
+          return controller.model.firebaseWorkspace.save();
+        }).then(() => {
+          later(modal, 'modal', 'hide', 2000)
         });
       };
       fr.readAsText(dataFile);
