@@ -42,6 +42,7 @@ def main(workspace, condition, roi, datatag, dff0s=None):
     cfreq = workspace.condition.info['framerate'] / n_panes
     sfs = []
     trials = dff0s.filter_by(trial_blank=False, trial_flicker=False)
+
     for sf in condition.sfrequencies:
         if datatag.trial_tf:
             sf_trials = trials.filter_by(

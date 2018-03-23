@@ -7,6 +7,9 @@ from cStringIO import StringIO
 from openpyxl import Workbook
 from openpyxl.styles import NamedStyle, PatternFill, Border, Side, Alignment, Protection, Font
 
+from pacu.core.io.scanbox.method.sfreq.fit_tf import tf_stats
+from pacu.core.io.scanbox.method.orientation.bestpref_tf import tf_bestpref
+
 class Export(object):
     def __init__(self, io, ws, condition, ids): #, rois):
         self.io = io
@@ -282,6 +285,56 @@ class Export(object):
                     row[8].style = style
                     row[9].value = roi.dtanovaeachs.filter_by(trial_tf=tfreq)[i].attributes['p']
                     row[9].style = style
+
+        if len(tfreqs) > 1:
+            for sfreq in sfreqs:
+                ws = wb.create_sheet('SFreq {}'.format(sfreq))
+
+                # format header columns
+                ws.merge_cells('A1:A2')
+                ws.merge_cells('B1:C1')
+                ws.merge_cells('D1:G1')
+
+                # write column titles
+                ws['A1'].value = 'Cell ID'
+                ws['A1'].style = header
+                ws['B1'].value = 'TF Cutoff Rel33'
+                ws['B1'].style = header
+                ws['D1'].value = 'TF'
+                ws['D1'].style = header
+                ws['G1'] # need to call to activate columns C - G
+
+                for cell,val in zip(ws[2][1:9], ['X','Y','Peak','Pref','Bandwidth','Global\nOPref']):
+                    cell.value = val
+                    cell.style = header
+
+                for idx, roi in enumerate(filtered_rois, 3):
+                    style = reg_cell
+                    workspace = roi.workspace
+                    condition = roi.workspace.condition
+                    contrast = roi.workspace.condition.contrasts[0]
+                    tf_result = tf_stats(workspace, condition, roi, contrast, sfreq, dff0s=None, fits=None)
+                    global_opref, _, _ = tf_bestpref(workspace, condition, roi, contrast, sfreq, dff0s=None)
+
+                    ws.cell(row=idx,column=1).value = int(roi.id)
+                    ws.cell(row=idx,column=1).style = style
+                    try:
+                        ws.cell(row=idx,column=2).value = tf_result['rc_33'].x
+                        ws.cell(row=idx,column=3).value = tf_result['rc_33'].y
+                    except:
+                        #print 'No "SF Cutoff Rel33" found for cell ',roi.params.cell_id
+                        ws.cell(row=idx,column=2).value = None
+                        ws.cell(row=idx,column=3).value = None
+                    ws.cell(row=idx,column=2).style = style
+                    ws.cell(row=idx,column=3).style = style
+                    ws.cell(row=idx,column=4).value = tf_result['peak']
+                    ws.cell(row=idx,column=4).style = style
+                    ws.cell(row=idx,column=5).value = tf_result['pref']
+                    ws.cell(row=idx,column=5).style = style
+                    ws.cell(row=idx,column=6).value = tf_result['ratio']
+                    ws.cell(row=idx,column=6).style = style
+                    ws.cell(row=idx,column=7).value = global_opref
+                    ws.cell(row=idx,column=7).style = style
 
         # Save and return in-memory file (bytes)
             #sio = StringIO()
