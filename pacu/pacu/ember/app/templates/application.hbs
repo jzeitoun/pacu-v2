@@ -5,17 +5,20 @@
     </h3>
   {{/link-to}}
   {{#ui-popup content="Toggle Fullscreen" tagName="span"}}
-    <div class="nav circular ui small icon button" {{action "toggleFullscreen"}}>
+    <div class="left floated nav circular ui small icon button" {{action "toggleFullscreen"}}>
       <i class="{{if fullscreen.isEnabled "compress" "expand"}} large icon"></i>
     </div>
   {{/ui-popup}}
   {{#each model.routes as |route|}}
     {{#ui-popup content=route.content tagName="span"}}
-      {{#link-to route.linkTo class="nav circular ui small icon blue button"}}
+      {{#link-to route.linkTo class="left floated nav circular ui small icon blue button"}}
         <i class="{{route.icon}} retro {{route.color}} large icon"></i>
       {{/link-to}}
     {{/ui-popup}}
   {{/each}}
+  <h3 class="ui left floated inverted header app-info">
+      v2.1.0
+  </h3>
   <h6 class="ui right floated inverted tiny header teal app-info">
     {{currentPath}}
   </h6>
