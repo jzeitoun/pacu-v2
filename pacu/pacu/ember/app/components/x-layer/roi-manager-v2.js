@@ -258,10 +258,23 @@ export default Ember.Component.extend({
           };
           break;
         case 'Delete':
-          this.get('selectedROIs').map(this.get('delete'));
+          if (this.get('selectedROIs').length > 10) {
+            this.get('batchDelete')();
+          } else {
+            this.get('selectedROIs').map(roi => {
+              this.get('delete')(roi);
+            });
+          };
           break;
         case 'Backspace':
-          this.get('selectedROIs').map(this.get('delete'));
+          debugger;
+          if (this.get('selectedROIs').length > 10) {
+            this.get('batchDelete')();
+          } else {
+            this.get('selectedROIs').map(roi => {
+              this.get('delete')(roi);
+            });
+          };
           break;
         case 'a':
           if (e.metaKey || e.ctrlKey) {

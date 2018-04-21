@@ -31,6 +31,7 @@ Date.prototype.toCustomString = function() {
 export default Controller.extend({
   selection: [],
   roiRecord: service(),
+  modalVisibility: false,
 
   actions: {
     monitorFirebaseConnection() {
@@ -59,8 +60,7 @@ export default Controller.extend({
     },
 
     deleteROI(roi) {
-      roi.deleteRecord();
-      roi.save().then(() => {
+      roi.destroyRecord().then(() => {
         // Set count to max ID after deleting
         var remainingROIs = this.get('roiRecord.all');
         var remainingIDs = remainingROIs.map(function(roi) {
@@ -75,6 +75,39 @@ export default Controller.extend({
         };
         this.model.file.set('roi_count', maxID);
       });
+    },
+
+    batchDeleteROI() {
+      const selectedROIs = this.get('roiRecord.selected');
+      const database = firebase.database();
+      const updates = {}
+      const wsID = this.model.firebaseWorkspace.id;
+      this.set('modalVisibility', true);
+      // get pushKeys of rois to delete
+      later(this, () => {
+        for (var i=0; i<selectedROIs.length; i++) {
+          let key = selectedROIs[i].id;
+          updates['/rois/' + key] = null;
+          updates['/workspaces/' + wsID + '/rois/' + key] = null;
+        };
+        // push updates to database
+        database.ref().update(updates).then(() => {
+          // Set count to max ID after deleting
+          var remainingROIs = this.get('roiRecord.all');
+          var remainingIDs = remainingROIs.map(function(roi) {
+            return roi.get('roi_id');
+          })
+          if (remainingIDs.length) {
+            var maxID = remainingIDs.reduce(function(a, b) {
+              return Math.max(a, b);
+            });
+          } else {
+            var maxID = 0;
+          };
+          this.model.file.set('roi_count', maxID);
+          this.set('modalVisibility', false);
+        });
+      }, 500);
     },
 
     deselectAll() {
@@ -340,49 +373,50 @@ export default Controller.extend({
       }
     },
 
-    loadJSONROIs(e) {
+    loadJSONROIs() {
       Ember.$('#roi-import').click();
     },
 
     importJSONROIs(name, e) {
       var dataFile = e.target.files[0];
-      // open import progress modal
       const controller = this;
       const fr = new FileReader();
-      const modal = $('.ui.' + name + '.modal');
-      const progressBar = $('.ui.' + name + '.progress');
       fr.onload = (/*e*/) => {
         const data = JSON.parse(fr.result);
-        progressBar.progress({
-          total: data.length,
-          text: {
-            active: '{value} of {total} done',
-            success: 'Success!'
-          }
-        });
-        modal.modal('show');
-        // set cur ID based on max id in roi list, not number of rois
         var ids = data.map(function(roi) {
           return roi.roi_id;
         });
         var maxID = Math.max(...ids);
         controller.model.file.set('roi_count', maxID);
         controller.model.file.save() // saving roi_count to file to maintain compatibility with sqlite structure
-        const newROIs = data.map(roi => controller.get('store').createRecord('fb-roi', roi));
-        const promises = newROIs.map(roi => {
-          return roi.save().then(roi => {
-            progressBar.progress('increment', 1);
-            return roi;
+        var modal = $('.ui.roiImport-progress.modal');
+        modal.modal('show');
+
+        later(this, () => {
+          // create data structure for atomic update const database = firebase.database();
+          const database = firebase.database();
+          const updates = {}
+          const wsID = controller.model.firebaseWorkspace.id;
+          for (var i=0; i<data.length; i++) {
+            let key = database.ref().child('rois').push().key;
+            updates['/rois/' + key] =
+              {
+                created: firebase.database.ServerValue.TIMESTAMP,
+                roi_id: data[i].roi_id,
+                polygon: data[i].polygon,
+                workspace: wsID
+              }
+            updates['/workspaces/' + wsID + '/rois/' + key] = true;
+          }
+
+          // push updates to database
+          database.ref().update(updates).then(() => {
+            modal.modal('hide');
           });
-        });
-        all(promises).then(rois => {
-          controller.model.firebaseWorkspace.get('rois').addObjects(rois);
-          return controller.model.firebaseWorkspace.save();
-        }).then(() => {
-          later(modal, 'modal', 'hide', 2000)
-        });
+        }, 500);
       };
       fr.readAsText(dataFile);
+      Ember.$('#roi-import')[0].value = null;
     },
 
     showProjection(name) {

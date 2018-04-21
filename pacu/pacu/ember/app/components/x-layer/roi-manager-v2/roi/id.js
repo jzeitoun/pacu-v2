@@ -15,6 +15,9 @@ export default Component.extend({
   fontSize: 20,
   fill: '#FFFFFF',
   x: Ember.computed('points', function() {
+    if (!this.get('points')) {
+      return 0;
+    };
     var pointArray = this.get('points').split(',').map(Number);
     var x = [];
     for (var i=0; i<pointArray.length; i+=2) {
@@ -25,6 +28,9 @@ export default Component.extend({
     return xMin + ((xMax-xMin)*.95);
   }),
   y: Ember.computed('points', function() {
+    if (!this.get('points')) {
+      return 0;
+    };
     var pointArray = this.get('points').split(',').map(Number);
     var y = [];
     for (var i=1; i<pointArray.length; i+=2) {

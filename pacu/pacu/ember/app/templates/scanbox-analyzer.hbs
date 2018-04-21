@@ -413,6 +413,20 @@
     </div>
   {{/ui-modal}}
 
+  {{#ui-modal id="roiImport-progress" class="roiImport-progress inverted" closable=false}}
+    <div class="modal-container">
+      <div class="loader"></div>
+      <div class="ui centered inverted large header">Importing ROIs...</div>
+    </div>
+  {{/ui-modal}}
+
+  {{#custom-modal id="delete-modal" visibility=modalVisibility}}
+    <div class="modal-container">
+      <div class="loader"></div>
+      <div class="ui centered inverted large header">Deleting ROIs...</div>
+    </div>
+  {{/custom-modal}}
+
   <div class="ui padded grid">
     {{! Main Canvas }}
     {{#zoomable-container class="twelve wide column imagestack-container"
@@ -437,6 +451,7 @@
           add=(action "addROI")
           update=(action "updateROI")
           delete=(action "deleteROI")
+          batchDelete=(action "batchDeleteROI")
           computeUncomputed=(action "computeUncomputed")
           computeSelected=(action "computeSelected")
           updateTable=(action "updateTable")

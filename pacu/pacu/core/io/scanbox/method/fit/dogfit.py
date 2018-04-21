@@ -5,7 +5,7 @@ from scipy import interpolate
 
 # prevent trying to stream figure through X11
 import matplotlib
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 from cStringIO import StringIO

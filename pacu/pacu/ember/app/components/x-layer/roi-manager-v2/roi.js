@@ -11,6 +11,9 @@ Array.prototype.maskFilter = function(mask) {
 
 // point string array to number array
 function pointsToArray(strPoints) {
+  if (!strPoints) {
+    return [];
+  };
   return strPoints.match(/[^,]+,[^,]+/g).map(function(point) {
     return point.split(',').map(Number);
   });
