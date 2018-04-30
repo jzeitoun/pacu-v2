@@ -24,3 +24,6 @@ package.json.ember-try
 
 # swaps
 *.swp
+
+#DS Store
+*.DS_Store
