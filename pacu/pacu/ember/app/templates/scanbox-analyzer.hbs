@@ -427,6 +427,15 @@
     </div>
   {{/custom-modal}}
 
+  {{!--  {{#if syncModalVisibility}}
+    {{#custom-modal id="sync-modal" visibility=true}}
+      <div class="modal-container">
+        <div class="loader"></div>
+        <div class="ui centered inverted large header">Synchronizing...</div>
+      </div>
+    {{/custom-modal}}
+  {{/if}}--}}
+
   <div class="ui padded grid">
     {{! Main Canvas }}
     {{#zoomable-container class="twelve wide column imagestack-container"
@@ -464,13 +473,23 @@
           disableHandles=disableHandles
           neuropilEnabled=model.firebaseWorkspace.neuropil_enabled
           neuropilFactor=model.firebaseWorkspace.neuropil_factor
-          neuropilRatio=model.firebaseWorkspace.neuropil_ratio}}
+          neuropilRatio=model.firebaseWorkspace.neuropil_ratio
+          resync=(action "resync")
+          autoSync=autoSync}}
 
       {{/x-layer}}
     {{/zoomable-container}}
 
     {{! ROI Control }}
     <div class="four wide column roi-list-container">
+      <h3>Firebase Control</h3>
+      <div class="flex-container">
+        {{input-modal autoSync=autoSync syncModalVisibility=syncModalVisibility}}
+        {{!--{{ui-checkbox label="ROI Position Sync"
+          checked=autoSync
+          onChange=(action "changeSync")
+          preventDefault=false}}--}}
+      </div>
       <h3>Neuropil Options</h3>
       <div class="flex-container">
         {{ui-checkbox label="Enable Neuropil Subtraction"

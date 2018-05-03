@@ -236,11 +236,17 @@ export default EmberObject.extend({
       default:
         return;
     };
-    this.set('img.channelDisplay', 'Green');
     this.set('projection', true);
-    this.get('wsx').invokeAsBinary('ch0.request_projection', image_type).then(buffer => {
-      this.set('img.buffer', buffer);
-    });
+    let curChannel = this.get('img.channelDisplay');
+    if (curChannel == 'Green' || curChannel == 'Both') {
+      this.get('wsx').invokeAsBinary('ch0.request_projection', image_type).then(buffer => {
+        this.set('img.buffer', buffer);
+      });
+    } else {
+      this.get('wsx').invokeAsBinary('ch1.request_projection', image_type).then(buffer => {
+        this.set('img.buffer', buffer);
+      });
+    };
   },
 
   requestMaxPITiff() {

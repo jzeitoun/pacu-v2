@@ -18,6 +18,7 @@ from pacu.core.io.scanbox.model import db as schema
 from pacu.core.model.experiment import ExperimentV1
 
 from pacu.core.addons.export import Export
+from pacu.core.addons.loadmat import loadmat, spio
 
 opt = manager.instance('opt')
 glab = manager.get('db').section('glab')()
@@ -27,9 +28,11 @@ class ScanboxIO(object):
     def __init__(self, path, cur_pane=0):
         self.path = userenv.joinpath('scanbox', path).ensure_suffix('.io')
         self.db_path = self.path.joinpath('db.sqlite3').absolute()
-        self.mat_path = opt.scanbox_root.joinpath(path).with_suffix('.mat')
+        self.root_mat_path = opt.scanbox_root.joinpath(path).with_suffix('.mat')
+        self.mat_path = self.path.joinpath('meta').with_suffix('.mat')
         self.sbx_path = opt.scanbox_root.joinpath(path).with_suffix('.sbx')
         self.cur_pane = cur_pane
+        self.confirm_mat() # JZ confirm mat file is copied to io directory
     @property
     def mat(self):
         return ScanboxMatView(self.mat_path)
@@ -38,11 +41,17 @@ class ScanboxIO(object):
         return ScanboxSBXView(self.sbx_path)
     def remove_io(self):
         self.path.rmtree()
+    def confirm_mat(self):
+        if self.path.is_dir() and not self.mat_path.is_file():
+            info = loadmat(self.root_mat_path.str)['info']
+            info['stempath'] = self.root_mat_path.stempath.str
+            spio.savemat(self.mat_path.str, {'info': info})
     def import_raw(self, condition_id=None):
         if self.path.is_dir():
             raise OSError('{} already exists!'.format(self.path))
         else:
             self.path.mkdir_if_none()
+        self.confirm_mat()
         print 'Converting raw data...'
         for nchan in range(self.mat.nchannels):
             ScanboxChannel(self.path.joinpath('{}.chan'.format(nchan))

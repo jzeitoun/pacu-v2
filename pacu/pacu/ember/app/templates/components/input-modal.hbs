@@ -1,0 +1,10 @@
+{{ui-checkbox label="ROI Position Sync"
+  checked=autoSync
+  onChange=(action (mut autoSync))}}
+
+{{#custom-modal id="sync-modal" visibility=syncModalVisibility}}
+  <div class="modal-container">
+    <div class="loader"></div>
+    <div class="ui centered inverted large header">Synchronizing...</div>
+  </div>
+{{/custom-modal}}

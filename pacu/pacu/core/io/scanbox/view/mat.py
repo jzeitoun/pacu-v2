@@ -1,6 +1,7 @@
 from __future__ import division
 
 import time
+import os
 from collections import namedtuple
 
 import numpy as np
@@ -25,13 +26,16 @@ class ScanboxMatView(ZeroDimensionArrayView):
         return self.path.name.startswith('Aligned')
     @property
     def sbxsize(self):
-        return self.path.with_suffix('.sbx').size
+        #return self.path.with_suffix('.sbx').size
+        return Path(self.stempath).with_suffix('.sbx').size
     @property
     def sbxtime(self):
-        return self.path.with_suffix('.sbx').created_at
+        #return self.path.with_suffix('.sbx').created_at
+        return Path(self.stempath).with_suffix('.sbx').created_at
     @property
     def sbxpath(self):
-        return self.path.with_suffix('.sbx').relative_to(opt.scanbox_root)
+        #return self.path.with_suffix('.sbx').relative_to(opt.scanbox_root)
+        return Path(os.path.split(self.stempath)[1]).with_suffix('.sbx')
     @property
     def iopath(self):
         return self.sbxpath.with_suffix('.io')

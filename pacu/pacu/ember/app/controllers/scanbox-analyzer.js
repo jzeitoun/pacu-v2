@@ -5,7 +5,7 @@ import download from 'pacu-v2/utils/download';
 import batch from 'pacu-v2/utils/batch';
 import firebase from 'firebase';
 import { all } from 'rsvp';
-import { later } from '@ember/runloop';
+import { later, next } from '@ember/runloop';
 
 const { getOwner } = Ember;
 
@@ -32,6 +32,8 @@ export default Controller.extend({
   selection: [],
   roiRecord: service(),
   modalVisibility: false,
+  syncModalVisibility: false,
+  autoSync: true,
 
   actions: {
     monitorFirebaseConnection() {
@@ -44,6 +46,10 @@ export default Controller.extend({
           this.set('fbConnection', false);
         }
       });
+    },
+
+    changeSync() {
+      this.toggleProperty('autoSync');
     },
 
     addROI(roi, file, workspace) {
@@ -82,6 +88,7 @@ export default Controller.extend({
       const database = firebase.database();
       const updates = {}
       const wsID = this.model.firebaseWorkspace.id;
+      debugger;
       this.set('modalVisibility', true);
       // get pushKeys of rois to delete
       later(this, () => {
@@ -106,6 +113,33 @@ export default Controller.extend({
           };
           this.model.file.set('roi_count', maxID);
           this.set('modalVisibility', false);
+        });
+      }, 500);
+    },
+
+    resync() {
+      const allROIs = this.get('roiRecord.all').toArray();
+      const database = firebase.database();
+      const updates = {}
+      const wsID = this.model.firebaseWorkspace.id;
+      this.set('syncModalVisibility', true);
+      // get pushKeys of rois to delete
+      later(this, () => {
+        for (var i=0; i<allROIs.length; i++) {
+          let roi = allROIs[i]
+          let key = roi.id;
+          updates['/rois/' + key] = {
+            created: roi.get('created'),
+            lastComputedPolygon: roi.get('lastComputedPolygon'),
+            neuropilPolygon: roi.get('neuropilPolygon'),
+            roi_id: roi.get('id'),
+            polygon: roi.get('polygon'),
+            workspace: roi.get('workspace.id'),
+          }
+        };
+        // push updates to database
+        database.ref().update(updates).then(() => {
+          this.set('syncModalVisibility', false);
         });
       }, 500);
     },
@@ -433,9 +467,20 @@ export default Controller.extend({
       this.set('projBusy', true);
       modal.modal('hide');
       this.get('toast').info(`Generating projections with index range ${start} - ${end}. Total frames: ${numFrames}.`)
-      stream.invoke('ch0.generate_projections', start, end).finally(() => {
-        this.set('projBusy', false);
+      //stream.invoke('ch0.generate_projections', start, end).finally(() => {
+      //  this.set('projBusy', false);
+      //  stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump');
+      //});
+      stream.invoke('ch0.generate_projections', start, end).then(() => {
         stream.mirror('ch0.has_maxp', 'ch0.has_meanp', 'ch0.has_sump');
+        if (stream.matChannels == 1) {
+          return stream.invoke('ch1.generate_projections', start, end).finally(() => {
+            this.set('projBusy', false);
+            stream.mirror('ch1.has_maxp', 'ch1.has_meanp', 'ch1.has_sump');
+          });
+        } else {
+          this.set('projBusy', false);
+        };
       });
     },
 

@@ -78,10 +78,19 @@ export default Ember.Component.extend({
       this.updatePrototype();
     }
   ),
+  autoSync: true,
+  synchronize: Ember.observer('autoSync', function() {
+    if (this.get('autoSync')) {
+      this.get('resync')();
+    };
+  }),
 
   actions: {
     triggerUpdate(roi_id) {
       var roi = this.get('rois').filterBy('roi_id', roi_id).get('firstObject');
+      if (!this.get('autoSync')) {
+        return;
+      };
       this.get('update')(roi);
     },
   },
@@ -267,7 +276,6 @@ export default Ember.Component.extend({
           };
           break;
         case 'Backspace':
-          debugger;
           if (this.get('selectedROIs').length > 10) {
             this.get('batchDelete')();
           } else {
@@ -283,6 +291,9 @@ export default Ember.Component.extend({
             });
           };
           return false;
+        case 's':
+          this.toggleProperty('autoSync');
+          break;
         default:
           break;
       }
