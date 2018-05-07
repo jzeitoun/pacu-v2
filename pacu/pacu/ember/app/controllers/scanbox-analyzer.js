@@ -132,7 +132,7 @@ export default Controller.extend({
             created: roi.get('created'),
             lastComputedPolygon: roi.get('lastComputedPolygon'),
             neuropilPolygon: roi.get('neuropilPolygon'),
-            roi_id: roi.get('id'),
+            roi_id: roi.get('roi_id'),
             polygon: roi.get('polygon'),
             workspace: roi.get('workspace.id'),
           }
