@@ -201,7 +201,8 @@ class ScanboxChannel(object):
     def dcmap(self):
         return DistortedColormap2('jet', xmid1=0.35, ymid1=0.65)
     def request_maxp_tiff(self):
-        arr = self.maxp.view('uint8')[..., 1::2]
+        #arr = self.maxp.view('uint8')[..., 1::2]
+        arr = self.maxp
         i = Image.fromarray(arr)
         io = StringIO()
         i.save(io, format='tiff')
@@ -209,7 +210,8 @@ class ScanboxChannel(object):
         io.close()
         return value
     def request_meanp_tiff(self):
-        arr = self.meanp.view('uint8')[..., 1::2]
+        #arr = self.meanp.view('uint8')[..., 1::2]
+        arr = self.meanp
         i = Image.fromarray(arr)
         io = StringIO()
         i.save(io, format='tiff')
@@ -217,7 +219,8 @@ class ScanboxChannel(object):
         io.close()
         return value
     def request_sump_tiff(self):
-        arr = self.sump.view('uint8')[..., 1::2]
+        #arr = self.sump.view('uint8')[..., 1::2]
+        arr = self.sump
         i = Image.fromarray(arr)
         io = StringIO()
         i.save(io, format='tiff')
