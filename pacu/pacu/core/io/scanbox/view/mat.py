@@ -35,7 +35,8 @@ class ScanboxMatView(ZeroDimensionArrayView):
     @property
     def sbxpath(self):
         #return self.path.with_suffix('.sbx').relative_to(opt.scanbox_root)
-        return Path(os.path.split(self.stempath)[1]).with_suffix('.sbx')
+        #return Path(os.path.split(self.stempath)[1]).with_suffix('.sbx')
+        return Path(self.stempath).with_suffix('.sbx').relative_to(opt.scanbox_root)
     @property
     def iopath(self):
         return self.sbxpath.with_suffix('.io')
