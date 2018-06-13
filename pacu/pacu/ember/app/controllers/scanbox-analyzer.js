@@ -6,6 +6,7 @@ import batch from 'pacu-v2/utils/batch';
 import firebase from 'firebase';
 import { all } from 'rsvp';
 import { later, next } from '@ember/runloop';
+import JSZip from "npm:jszip";
 
 const { getOwner } = Ember;
 
@@ -88,7 +89,6 @@ export default Controller.extend({
       const database = firebase.database();
       const updates = {}
       const wsID = this.model.firebaseWorkspace.id;
-      debugger;
       this.set('modalVisibility', true);
       // get pushKeys of rois to delete
       later(this, () => {
@@ -491,26 +491,94 @@ export default Controller.extend({
 
     exportProjection(type) {
       const {io, ws} = this.model.name;
-      const fname = io.split('.')[0];
+      let fname = io.split('.')[0];
+      fname = fname.split('/').slice(-1)[0]
       const ts = (new Date).toCustomString();
+      const channels = this.model.stream.get('img.channelOptions')
       switch (type) {
         case 'max':
           this.toast.info('Exporting max projection image...');
-          this.model.stream.requestMaxPITiff().then(data => {
-            download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-max-projection.tif`, 'image/tiff');
-          });
+          if (channels.contains('Both')) {
+            this.model.stream.requestMaxPITiff('ch0').then(data => {
+              let zip = new JSZip();
+              zip.file(
+                `${fname}_green-${ws}-${ts}-max-projection.tif`,
+                data,
+                {base64: true}
+              );
+              this.model.stream.requestMaxPITiff('ch1').then(data => {
+                zip.file(
+                  `${fname}_red-${ws}-${ts}-max-projection.tif`,
+                  data,
+                  {base64: true}
+                );
+                zip.generateAsync({type:"arraybuffer"})
+                .then(function(content) {
+                  download.fromArrayBuffer(content, `${fname}-${ws}-${ts}-max-projection.zip`);
+                });
+              });
+            });
+          } else {
+            this.model.stream.requestMaxPITiff('ch0').then(data => {
+              download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-max-projection.tif`, 'image/tiff');
+            });
+          }
           break;
         case 'mean':
-          this.toast.info('Exporting mean projection image...');
-          this.model.stream.requestMeanPITiff().then(data => {
-            download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-mean-projection.tif`, 'image/tiff');
-          });
+          this.toast.info('Exporting max projection image...');
+          if (channels.contains('Both')) {
+            this.model.stream.requestMeanPITiff('ch0').then(data => {
+              let zip = new JSZip();
+              zip.file(
+                `${fname}_green-${ws}-${ts}-mean-projection.tif`,
+                data,
+                {base64: true}
+              );
+              this.model.stream.requestMeanPITiff('ch1').then(data => {
+                zip.file(
+                  `${fname}_red-${ws}-${ts}-mean-projection.tif`,
+                  data,
+                  {base64: true}
+                );
+                zip.generateAsync({type:"arraybuffer"})
+                .then(function(content) {
+                  download.fromArrayBuffer(content, `${fname}-${ws}-${ts}-mean-projection.zip`);
+                });
+              });
+            });
+          } else {
+            this.model.stream.requestMeanPITiff('ch0').then(data => {
+              download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-mean-projection.tif`, 'image/tiff');
+            });
+          }
           break;
         case 'sum':
-          this.toast.info('Exporting sum projection image...');
-          this.model.stream.requestSumPITiff().then(data => {
-            download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-sum-projection.tif`, 'image/tiff');
-          });
+          this.toast.info('Exporting max projection image...');
+          if (channels.contains('Both')) {
+            this.model.stream.requestSumPITiff('ch0').then(data => {
+              let zip = new JSZip();
+              zip.file(
+                `${fname}_green-${ws}-${ts}-sum-projection.tif`,
+                data,
+                {base64: true}
+              );
+              this.model.stream.requestSumPITiff('ch1').then(data => {
+                zip.file(
+                  `${fname}_red-${ws}-${ts}-sum-projection.tif`,
+                  data,
+                  {base64: true}
+                );
+                zip.generateAsync({type:"arraybuffer"})
+                .then(function(content) {
+                  download.fromArrayBuffer(content, `${fname}-${ws}-${ts}-sum-projection.zip`);
+                });
+              });
+            });
+          } else {
+            this.model.stream.requestSumPITiff('ch0').then(data => {
+              download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-sum-projection.tif`, 'image/tiff');
+            });
+          }
           break;
         default:
           return;

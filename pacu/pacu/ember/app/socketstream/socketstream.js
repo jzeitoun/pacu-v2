@@ -249,13 +249,13 @@ export default EmberObject.extend({
     };
   },
 
-  requestMaxPITiff() {
-    return this.get('wsx').invokeAsBinary('ch0.request_maxp_tiff');
+  requestMaxPITiff(channel) {
+    return this.get('wsx').invokeAsBinary(`${channel}.request_maxp_tiff`);
   },
-  requestMeanPITiff() {
-    return this.get('wsx').invokeAsBinary('ch0.request_meanp_tiff');
+  requestMeanPITiff(channel) {
+    return this.get('wsx').invokeAsBinary(`${channel}.request_meanp_tiff`);
   },
-  requestSumPITiff() {
-    return this.get('wsx').invokeAsBinary('ch0.request_sump_tiff');
+  requestSumPITiff(channel) {
+    return this.get('wsx').invokeAsBinary(`${channel}.request_sump_tiff`);
   }
 });
