@@ -32,7 +32,7 @@ class ScanboxIO(object):
         self.mat_path = self.path.joinpath('meta').with_suffix('.mat')
         self.sbx_path = opt.scanbox_root.joinpath(path).with_suffix('.sbx')
         self.cur_pane = cur_pane
-        self.confirm_mat() # JZ confirm mat file is copied to io directory
+        #self.confirm_mat() # JZ confirm mat file is copied to io directory
     @property
     def mat(self):
         return ScanboxMatView(self.mat_path)
