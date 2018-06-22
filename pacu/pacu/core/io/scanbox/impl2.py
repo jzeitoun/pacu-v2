@@ -20,6 +20,9 @@ from pacu.core.model.experiment import ExperimentV1
 from pacu.core.addons.export import Export
 from pacu.core.addons.loadmat import loadmat, spio
 
+import os
+import shutil
+
 opt = manager.instance('opt')
 glab = manager.get('db').section('glab')()
 userenv = identity.path.userenv
@@ -32,7 +35,7 @@ class ScanboxIO(object):
         self.mat_path = self.path.joinpath('meta').with_suffix('.mat')
         self.sbx_path = opt.scanbox_root.joinpath(path).with_suffix('.sbx')
         self.cur_pane = cur_pane
-        #self.confirm_mat() # JZ confirm mat file is copied to io directory
+        self.confirm_mat() # JZ confirm mat file is copied to io directory
     @property
     def mat(self):
         return ScanboxMatView(self.mat_path)
@@ -43,7 +46,23 @@ class ScanboxIO(object):
         self.path.rmtree()
     def confirm_mat(self):
         if self.path.is_dir() and not self.mat_path.is_file():
-            info = loadmat(self.root_mat_path.str)['info']
+            try:
+                shutil.copy(self.root_mat_path.str, self.mat_path.str)
+            except IOError:
+                root_path, mat = os.path.split(self.root_mat_path.str)
+                if 'moco_aligned' in mat:
+                    try:
+                        mat_base, suffix = os.path.splitext(mat)
+                        mat_base = '_'.join(mat_base.split('_')[2:5])
+                        mat = ''.join((mat_base, suffix))
+                        root_mat_path = os.path.join(root_path, mat)
+                        shutil.copy(root_mat_path, self.mat_path.str)
+                    except IOError:
+                        print('Could not import {}. \n File does not exist.'.format(root_mat_path))
+                else:
+                    print('Could not import {}. \n File does not exist.'.format(self.root_mat_path.str))
+        if self.mat_path.is_file():
+            info = loadmat(self.mat_path.str)['info']
             info['stempath'] = self.root_mat_path.stempath.str
             spio.savemat(self.mat_path.str, {'info': info})
     def import_raw(self, condition_id=None):
