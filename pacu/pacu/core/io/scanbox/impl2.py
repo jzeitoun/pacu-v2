@@ -63,8 +63,9 @@ class ScanboxIO(object):
                     print('Could not import {}. \n File does not exist.'.format(self.root_mat_path.str))
         if self.mat_path.is_file():
             info = loadmat(self.mat_path.str)['info']
-            info['stempath'] = self.root_mat_path.stempath.str
-            spio.savemat(self.mat_path.str, {'info': info})
+            if 'stempath' not in info:
+                info['stempath'] = self.root_mat_path.stempath.str
+                spio.savemat(self.mat_path.str, {'info': info})
     def import_raw(self, condition_id=None):
         if self.path.is_dir():
             raise OSError('{} already exists!'.format(self.path))

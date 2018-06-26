@@ -475,7 +475,9 @@
           neuropilFactor=model.firebaseWorkspace.neuropil_factor
           neuropilRatio=model.firebaseWorkspace.neuropil_ratio
           resync=(action "resync")
-          autoSync=autoSync}}
+          autoSync=autoSync
+          contrastMin=stream.img.min
+          contrastMax=stream.img.max}}
 
       {{/x-layer}}
     {{/zoomable-container}}

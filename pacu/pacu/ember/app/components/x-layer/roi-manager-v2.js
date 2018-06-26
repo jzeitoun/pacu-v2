@@ -196,6 +196,8 @@ export default Ember.Component.extend({
     Ember.$(document).on("keydown", e => {
       var radius = this.get('roiPrototype.radius');
       var numPoints = this.get('roiPrototype.numPoints');
+      const contrastMin = parseInt(this.get('contrastMin'));
+      const contrastMax = parseInt(this.get('contrastMax'));
       //console.log(e.key);
       switch (e.key) {
         case 'ArrowLeft':
@@ -293,6 +295,26 @@ export default Ember.Component.extend({
           return false;
         case 's':
           this.toggleProperty('autoSync');
+          break;
+        case 'q':
+          if (contrastMin > 0) {
+            this.set('contrastMin', contrastMin - 1);
+          }
+          break;
+        case 'w':
+          if (contrastMin < 255) {
+            this.set('contrastMin', contrastMin + 1);
+          }
+          break;
+        case 'e':
+          if (contrastMax > 0) {
+            this.set('contrastMax', contrastMax - 1);
+          }
+          break;
+        case 'r':
+          if (contrastMax < 255) {
+            this.set('contrastMax', contrastMax + 1);
+          }
           break;
         default:
           break;
