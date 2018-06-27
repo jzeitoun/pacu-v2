@@ -161,6 +161,38 @@ def handle_single(workspace, condition, roi, datatag, n_panes):
 
     return dict(on=on_trace_f_0.tolist(), baseline=baseline_trace_f_0.tolist())
 
+def get_trial_indices(workspace, condition, datatag):
+    pane_offset = 0
+    on_duration = condition.on_duration
+    off_duration = condition.off_duration
+    framerate = condition.info['framerate']
+    nframes = condition.info['nframes']
+
+    on_frames = int(framerate * on_duration)
+    off_frames = int(framerate * off_duration)
+    bs_frames = off_frames - 1
+
+    on_first_frame = int(datatag.trial_on_time*framerate) + pane_offset
+    on_last_frame = int(on_first_frame + on_frames) + pane_offset
+
+    # we can use last off period when we work with very first trial
+    baseline_first_frame = on_first_frame - off_frames
+    if baseline_first_frame < 0:
+        baseline_first_frame = 0
+        # ht fri jan 20 2017
+        baseline_last_frame = 0
+        # baseline_last_frame = off_frames - 1
+    else:
+        baseline_last_frame = on_first_frame - 1
+
+    off_first_frame = min(on_last_frame, nframes)
+    off_last_frame = min(off_first_frame + off_frames, nframes)
+
+    return {
+            'baseline': [baseline_first_frame, baseline_last_frame],
+            'on': [on_first_frame, on_last_frame]
+            }
+
 def main(workspace, condition, roi, datatag):
     n_panes = condition.info.get('focal_pane_args', {}).get('n', 1)
     if n_panes > 1:

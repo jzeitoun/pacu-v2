@@ -184,7 +184,13 @@ export default Controller.extend({
       this.send('computeROIs', uncomputedROIs);
     },
 
-    computeROIs(rois) {
+    computeSelectedStatsOnly() {
+      this.toast.info('Computing selected ROIs...');
+      var selectedROIs = this.get('roiRecord.selected');
+      this.send('computeROIs', selectedROIs, 'refresh_stats_only');
+    },
+
+    computeROIs(rois, action='refresh_all') {
       const store = this.get('store');
       const model = this.model
       const workspace = this.model.workspace;
@@ -230,7 +236,7 @@ export default Controller.extend({
             return store.createRecord('action', {
               model_name: 'ROI',
               model_id: roiData.id,
-              action_name: 'refresh_all'
+              action_name: action
             }).save().then((action) => {
               if (action.get('status_code') === 500) {
                 this.get('toast').error(action.get('status_text'));

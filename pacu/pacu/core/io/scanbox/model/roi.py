@@ -147,6 +147,20 @@ class ROI(SQLite3Base):
     def refresh_orientations_fit(self):
        print 'REFRESH OriFit' # used in ember/app/pods/roi/model.js
        for tag in self.dtorientationsfits: tag.refresh()
+
+    def refresh_stats_only(self): # added by JZ, compute custom traces
+        print 'REFRESH Orientations'
+        for tag in self.dtorientationsmeans: tag.refresh()
+        print 'REFRESH BEST PREF'
+        for tag in self.dtorientationbestprefs: tag.refresh() # <- global o_pref made here
+        self.refresh_orientations_fit() # <- each r_max made here
+        print 'REFRESH SFreqFit'
+        for tag in self.dtsfreqfits: tag.refresh() # <- requires r_max, each peak_sfreq made here
+        print 'REFRESH Anova All'
+        for tag in self.dtanovaalls: tag.refresh()
+        print 'REFRESH Anova Each'
+        for tag in self.dtanovaeachs: tag.refresh()
+
     def refresh_all(self):
         print 'REFRESH TRACE'
         condition = self.workspace.condition
