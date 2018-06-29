@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.io as scio
 import zipfile
+import json
 import os
 
 from cStringIO import StringIO
@@ -9,6 +10,7 @@ from openpyxl.styles import NamedStyle, PatternFill, Border, Side, Alignment, Pr
 
 from pacu.core.io.scanbox.method.sfreq.fit_tf import tf_stats
 from pacu.core.io.scanbox.method.orientation.bestpref_tf import tf_bestpref
+from . import extract_traces as et
 
 class Export(object):
     def __init__(self, io, ws, condition, ids): #, rois):
@@ -38,6 +40,39 @@ class Export(object):
             return np.mean(flicker_responses, 1)
         else:
             return []
+
+    def traces_json(self):
+        channel_map = {
+                1: {'green': self.io.ch0, 'red': self.io.ch1},
+                2: {'green': self.io.ch0},
+                3: {'red': self.io.ch0}
+                }
+        channel_layout = channel_map[self.io.mat.channels]
+
+        filtered_rois = [roi for roi in self.rois if roi.id in self.ids]
+        roi_map = {roi.id: roi for roi in filtered_rois}
+        roi_output = []
+
+        for roi in filtered_rois:
+            roi_output.append({
+                'roi_id': roi.id,
+                'polygon': et.array_to_polygon(roi.polygon)
+                })
+
+        for channel in channel_layout.keys():
+            data = channel_layout[channel].mmap
+            for roi in roi_output:
+                point_pairs = et.polygon_to_array(roi['polygon'])
+                if self.io.mat.channels == 1 and channel == 'red':
+                    masked_trace = et.extract_mean_trace(data, point_pairs)
+                    trace = masked_trace.data.tolist()
+                else:
+                    trace = roi_map[roi['roi_id']].dtoverallmean.value
+                roi.update({channel: trace})
+
+        sio = StringIO()
+        json.dump(roi_output, sio)
+        return sio.getvalue()
 
     def both(self):
         # Create in-memory zipfile

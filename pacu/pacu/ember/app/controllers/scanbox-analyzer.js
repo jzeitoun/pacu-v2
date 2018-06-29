@@ -34,6 +34,7 @@ export default Controller.extend({
   roiRecord: service(),
   modalVisibility: false,
   syncModalVisibility: false,
+  exportModalVisibility: false,
   autoSync: true,
 
   actions: {
@@ -413,8 +414,32 @@ export default Controller.extend({
       }
     },
 
+    exportJSONTraces() {
+      this.set('exportModalVisibility', true);
+      var computedROIs = this.get('roiRecord').get('computed');
+      const {io, ws} = this.model.name;
+      const fname = io.split('.')[0];
+      const ids = [];
+      const toast = this.toast;
+      const modal = $('.ui.export-progress.modal');
+      for (var i=0; i<computedROIs.length; i++) {
+        ids.push(computedROIs[i].get('roi_id'));
+      }
+      this.model.stream.invokeAsBinary('export_rois_json', ids.join(), ws).then(data => {
+        const ts = (new Date).toCustomString();
+        download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-traces.json`, 'application/json');
+        this.set('exportModalVisibility', false);
+      }).catch(reason => {
+        this.set('exportModalVisibility', false);
+        toast.error(reason); });
+    },
+
     loadJSONROIs() {
       Ember.$('#roi-import').click();
+    },
+
+    loadJSONTraces() {
+      Ember.$('#insert-traces').click();
     },
 
     importJSONROIs(name, e) {
@@ -455,6 +480,23 @@ export default Controller.extend({
           });
         }, 500);
       };
+      fr.readAsText(dataFile);
+      Ember.$('#roi-import')[0].value = null;
+    },
+
+    insertJSONTraces(name, e) {
+      var dataFile = e.target.files[0];
+      const controller = this;
+      const {io, ws} = this.model.name;
+      const toast = this.toast
+      const fr = new FileReader();
+      fr.onload = (/*e*/) => {
+        const data = JSON.parse(fr.result);
+        controller.model.stream.invokeAsBinary('insert_traces_json', data, ws).then(res => {
+          toast.success('ROI traces updated.')
+        }).catch(reason => {
+          toast.error(reason); });
+        };
       fr.readAsText(dataFile);
       Ember.$('#roi-import')[0].value = null;
     },

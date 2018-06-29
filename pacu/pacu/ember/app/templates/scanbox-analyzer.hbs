@@ -352,6 +352,10 @@
       <input type="file" id="roi-import" style="display: none"
         onchange={{action "importJSONROIs" "import-progress"}}/>
 
+
+      <input type="file" id="insert-traces" style="display: none"
+        onchange={{action "insertJSONTraces" "import-progress"}}/>
+
       {{#ui-modal name="import-progress" class="import-progress inverted" closable=false}}
         <h2 class="progress-header">Importing ROIs</h2>
         {{#ui-progress class="import-progress teal inverted indicating progress"}}
@@ -378,8 +382,18 @@
           <span class="item" {{action "exportJSONROIs"}}>
             ROIs
           </span>
+          <span class="item" {{action "exportJSONTraces"}}>
+            Raw Traces
+          </span>
         </div>
       {{/ui-dropdown}}
+
+      {{#ui-dropdown}}
+        <a class="item" {{action "loadJSONTraces"}}>
+          Insert
+        </a>
+      {{/ui-dropdown}}
+
     </div> {{!-- End Menu --}}
   </div>
 
@@ -425,6 +439,13 @@
     <div class="modal-container">
       <div class="loader"></div>
       <div class="ui centered inverted large header">Deleting ROIs...</div>
+    </div>
+  {{/custom-modal}}
+
+  {{#custom-modal id="export-modal" visibility=exportModalVisibility}}
+    <div class="modal-container">
+      <div class="loader"></div>
+      <div class="ui centered inverted large header">Exporting ROI Traces...</div>
     </div>
   {{/custom-modal}}
 

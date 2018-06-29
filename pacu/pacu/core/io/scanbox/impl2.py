@@ -20,6 +20,8 @@ from pacu.core.model.experiment import ExperimentV1
 from pacu.core.addons.export import Export
 from pacu.core.addons.loadmat import loadmat, spio
 
+from pacu.core.addons.insert_traces import insert_traces
+
 import os
 import shutil
 
@@ -213,6 +215,13 @@ class ScanboxIO(object):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
         return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).both()
+    def export_rois_json(self, ids, wsName):
+        active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
+        #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
+        return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).traces_json()
+    def insert_traces_json(self, data, wsName):
+        active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
+        insert_traces(ScanboxIO(self.path), active_workspace, data)
 
 def open_sqlite(path):
     return schema.get_sessionmaker(path, echo=False)
