@@ -28,11 +28,14 @@ def array_to_polygon(array):
             )
 
 def extract_mean_trace(data, point_pairs):
+    if cv2.__version__.split('.')[0] == '2':
+        point_pairs = point_pairs[np.newaxis, :]
     x,y,w,h = cv2.boundingRect(point_pairs)
     offset = np.array((x,y))
     mask_pairs = point_pairs - offset
     bbox = np.zeros((h,w))
-    bbox_mask = cv2.fillPoly(bbox, [mask_pairs], (255,255,255)) == 0
+    cv2.fillPoly(bbox, [mask_pairs], (255,255,255))
+    bbox_mask = bbox == 0
     bbox_full_mask = np.broadcast_to(bbox_mask, (data.shape[0], bbox_mask.shape[0], bbox_mask.shape[1]))
     masked_data = np.ma.array(data[:,y:y+h,x:x+w], mask=bbox_full_mask)
     trace = masked_data.mean(axis=(1,2))
