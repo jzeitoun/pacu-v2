@@ -35,6 +35,7 @@ export default Controller.extend({
   modalVisibility: false,
   syncModalVisibility: false,
   exportModalVisibility: false,
+  insertModalVisibility: false,
   autoSync: true,
 
   actions: {
@@ -491,14 +492,17 @@ export default Controller.extend({
       const toast = this.toast
       const fr = new FileReader();
       fr.onload = (/*e*/) => {
+        this.set('insertModalVisibility', true);
         const data = JSON.parse(fr.result);
         controller.model.stream.invokeAsBinary('insert_traces_json', data, ws).then(res => {
+          this.set('insertModalVisibility', false);
           toast.success('ROI traces updated.')
         }).catch(reason => {
+          this.set('insertModalVisibility', false);
           toast.error(reason); });
         };
       fr.readAsText(dataFile);
-      Ember.$('#roi-import')[0].value = null;
+      Ember.$('#insert-traces')[0].value = null;
     },
 
     showProjection(name) {

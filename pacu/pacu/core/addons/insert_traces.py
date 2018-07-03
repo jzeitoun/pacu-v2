@@ -12,15 +12,17 @@ def insert_traces(io, ws, rois):
     of the custom trace.
     '''
     condition = io.condition
-    roi_id_map = {roi.id: roi for roi in ws.rois}
+    workspace = io.condition.workspaces.filter_by(name=ws.name)[0]
+    roi_id_map = {roi.id: roi for roi in workspace.rois}
     for roi in rois:
-        if 'trace' not in roi:
+        if 'trace' not in roi or roi['roi_id'] not in roi_id_map:
             continue
         trace = np.array(roi['trace'])
         db_roi = roi_id_map[roi['roi_id']]
         for trial in db_roi.dttrialdff0s:
             indices = get_trial_indices(workspace, condition, trial)
-            trial.value['baseline'] = trace[slice(*indices['baseline'])]
-            trial.value['on'] = trace[slice(*indices['on'])]
+            baseline = trace[slice(*indices['baseline'])]
+            on = trace[slice(*indices['on'])]
+            trial.value = {'baseline': baseline.tolist(), 'on': on.tolist()}
         print('Updated trace for ROI {}'.format(roi['roi_id']))
     io.db_session.flush() # Commit updates
