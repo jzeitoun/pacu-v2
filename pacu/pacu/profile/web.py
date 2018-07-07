@@ -16,6 +16,7 @@ def default(profile):
         'facebook_api_key',
         'facebook_secret'
     ]}
+    kwargs.update({'websocket_max_message_size': 128000000}) # JZ increase allowed messge size (units are bytes)
     app = Application.backend(
         [JSONAPIHandler, APIHandler, MSGHandler,
            #  MMWStreamHandler,

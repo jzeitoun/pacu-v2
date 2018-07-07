@@ -219,9 +219,9 @@ class ScanboxIO(object):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
         return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).traces_json()
-    def insert_traces_json(self, data, wsName):
+    def insert_traces_json(self, payload, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
-        insert_traces(ScanboxIO(self.path), active_workspace, data)
+        insert_traces(ScanboxIO(self.path), active_workspace, payload)
 
 def open_sqlite(path):
     return schema.get_sessionmaker(path, echo=False)

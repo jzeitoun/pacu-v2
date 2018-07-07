@@ -19,7 +19,7 @@ def insert_traces(io, ws, rois):
             continue
         trace = np.array(roi['trace'])
         db_roi = roi_id_map[roi['roi_id']]
-        for trial in db_roi.dttrialdff0s:
+        for trial in db_roi.dttrialdff0s[1:]:
             indices = get_trial_indices(workspace, condition, trial)
             baseline = trace[slice(*indices['baseline'])]
             on = trace[slice(*indices['on'])]
