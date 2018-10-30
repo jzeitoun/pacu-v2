@@ -372,4 +372,10 @@ def redump(filename):
     session.commit()
     return model
 
+def SqliteBrowser(ScanboxIO):
+    def __init__(self, path, cur_pane=0):
+        self.path = userenv.joinpath(path)
+        self.db_path = self.path.joinpath('db.sqlite3').absolute() if 'sqlite3' not in path else self.path
+        self.cur_pane = cur_pane
+
 
