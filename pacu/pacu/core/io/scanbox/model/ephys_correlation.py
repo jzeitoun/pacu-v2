@@ -2,7 +2,7 @@ import base64
 import time
 
 import matplotlib
-matplotlib.use('svg')
+#matplotlib.use('svg')
 from matplotlib import pyplot
 import numpy as np
 from cStringIO import StringIO
