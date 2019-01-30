@@ -66,10 +66,28 @@ class ScanboxMatView(ZeroDimensionArrayView):
         return rate if self.scanmode else rate * 2
     @property
     def nchannels(self):
-        return 2 if self.channels == 1 else 1
+        if self.channels == -1:
+            if self.chan.nchan == 1:
+                return 1
+            else:
+                return 2
+        elif self.channels == 1:
+            return 2
+        else:
+            return 1
+        #return 2 if self.channels == 1 else 1 (JZ) For compatibility with mesoscope
     @property
     def factor(self):
-        return 1 if self.channels == 1 else 2
+        if self.channels == -1:
+            if self.chan.nchan == 1:
+                return 2
+            else:
+                return 1
+        elif self.channels == 1:
+            return 1
+        else:
+            return 2
+        #return 1 if self.channels == 1 else 2 (JZ) For compatibility with mesoscope
     @property
     def scanmodestr(self):
         return 'uni' if self.scanmode == 1 else 'bi'
