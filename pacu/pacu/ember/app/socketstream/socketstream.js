@@ -57,7 +57,7 @@ export default EmberObject.extend({
   invokeAsBinary(func, ...args) { return this.get('wsx').invokeAsBinary(func, ...args); },
   init() {
     this._super(...arguments);
-    this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump', 'mat.channels');
+    this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump', 'mat.channels', 'mat.chan.sample');
     Ember.run.later(this, 'setChannelOptions', 100);
     const keysToObserve = ['min','max','red_min','red_max'];
     keysToObserve.forEach(key => {
@@ -88,6 +88,22 @@ export default EmberObject.extend({
     var channelSet = this.get('channelSet');
     if ( (channels && !this.get('channelSet')) || (!channels && this.get('channelSet')) ) {
       switch (channels) {
+        case -1 :
+          let activeChannels = this.get('matChanSample');
+          if (activeChannels[0] && activeChannels[1]) {
+            this.set('img.channelOptions', ['Green', 'Red', 'Both']);
+            this.set('img.channelDisplay', 'Green');
+            this.set('channelSet', true);
+          } else if (activeChannels[0] &! activeChannels[1]){
+            this.set('img.channelOptions', ['Green']);
+            this.set('img.channelDisplay', 'Green');
+            this.set('channelSet', true);
+          } else if (activeChannels[1] &! activeChannels[0]) {
+            this.set('img.channelOptions', ['Red']);
+            this.set('img.channelDisplay', 'Red');
+            this.set('channelSet', true);
+          }
+          break;
         case 1 :
           this.set('img.channelOptions', ['Green', 'Red', 'Both']);
           this.set('img.channelDisplay', 'Green');
