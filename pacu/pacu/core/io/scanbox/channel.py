@@ -73,9 +73,13 @@ class ScanboxChannel(object):
         self.n_focal_pane = n_focal_pane
         self.c_focal_pane = c_focal_pane
         self.path = Path(path).ensure_suffix('.chan')
+        self.red_path = self.path.parent.joinpath('1.chan')
         self.channel = int(self.path.stem)
         self.maxppath = self.path.join_suffixes('.maxp.npy')
         self.meanppath = self.path.join_suffixes('.meanp.npy')
+        self.red_sumppath = self.red_path.join_suffixes('.sump.npy')
+        self.red_maxppath = self.red_path.join_suffixes('.maxp.npy')
+        self.red_meanppath = self.red_path.join_suffixes('.meanp.npy')
         self.sumppath = self.path.join_suffixes('.sump.npy')
         self.mmappath = self.path.join_suffixes('.mmap.npy')
         self.metapath = self.path.join_suffixes('.meta.json')
@@ -164,11 +168,20 @@ class ScanboxChannel(object):
                 ), axis=0).transpose(1,2,0).tostring()
     def request_projection(self, image_type):
         if image_type == 'max':
-            proj = self.maxp.view('uint8')[..., 1::2]
+            if self.maxp.dtype == 'uint8':
+                proj = self.maxp
+            else:
+                proj = self.maxp.view('uint8')[..., 1::2]
         elif image_type == 'mean':
-            proj = self.meanp.view('uint8')[..., 1::2]
+            if self.meanp.dtype == 'uint8':
+                proj = self.meanp
+            else:
+                proj = self.meanp.view('uint8')[..., 1::2]
         elif image_type == 'sum':
-            proj = self.sump.view('uint8')[..., 1::2]
+            if self.sump.dtype == 'uint8':
+                proj = self.sump
+            else:
+                proj = self.sump.view('uint8')[..., 1::2]
         return self.cmap8bit.to_rgba(proj, bytes=True).tostring()
     def set_cmap(self, cmap):
         self.cmap = colormaps[cmap]
@@ -195,8 +208,12 @@ class ScanboxChannel(object):
         return ScalarMappable(norm=self.norm, cmap=self.cmap)
     @property
     def norm(self):
-        return Normalize(
-            vmin=self.min_val, vmax=self.max_val)
+        if self.channel_display == 'Green':
+            return Normalize(
+                vmin=self.min_val, vmax=self.max_val)
+        elif self.channel_display == 'Red':
+            return Normalize(
+                vmin=self.red_min_val, vmax=self.red_max_val)
     @memoized_property
     def dcmap(self):
         return DistortedColormap2('jet', xmid1=0.35, ymid1=0.65)
@@ -229,44 +246,93 @@ class ScanboxChannel(object):
         return value
     @property
     def maxp(self):
-        return np.load(self.maxppath.str) if self.maxppath.is_file() else None
+        if self.channel_display == 'Green':
+            return np.load(self.maxppath.str) if self.maxppath.is_file() else None
+        elif self.channel_display == 'Red':
+            return np.load(self.red_maxppath.str) if self.maxppath.is_file() else None
+        elif self.channel_display == 'Both':
+            red_channel = self.red_scale(np.load(self.red_maxppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            green_channel = self.scale(np.load(self.maxppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            return np.stack((
+                red_channel,
+                green_channel,
+                self.blue_channel,
+                self.alpha_channel
+                ), axis=0).transpose(1,2,0)#.tostring()
+        #return np.load(self.maxppath.str) if self.maxppath.is_file() else None
     @property
     def meanp(self):
-        return np.load(self.meanppath.str) if self.meanppath.is_file() else None
+        if self.channel_display == 'Green':
+            return np.load(self.meanppath.str) if self.meanppath.is_file() else None
+        elif self.channel_display == 'Red':
+            return np.load(self.red_meanppath.str) if self.meanppath.is_file() else None
+        elif self.channel_display == 'Both':
+            red_channel = self.red_scale(np.load(self.red_meanppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            green_channel = self.scale(np.load(self.meanppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            return np.stack((
+                red_channel,
+                green_channel,
+                self.blue_channel,
+                self.alpha_channel
+                ), axis=0).transpose(1,2,0)#.tostring()
+        #return np.load(self.meanppath.str) if self.meanppath.is_file() else None
     @property
     def sump(self):
-        return np.load(self.sumppath.str) if self.sumppath.is_file() else None
+        if self.channel_display == 'Green':
+            return np.load(self.sumppath.str) if self.sumppath.is_file() else None
+        elif self.channel_display == 'Red':
+            return np.load(self.red_sumppath.str) if self.sumppath.is_file() else None
+        elif self.channel_display == 'Both':
+            red_channel = self.red_scale(np.load(self.red_sumppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            green_channel = self.scale(np.load(self.sumppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            return np.stack((
+                red_channel,
+                green_channel,
+                self.blue_channel,
+                self.alpha_channel
+                ), axis=0).transpose(1,2,0)#.tostring()
+        #return np.load(self.sumppath.str) if self.sumppath.is_file() else None
     def generate_projections(self, start, end):
         start = int(start)
         end = int(end)
-        chan = self.mmap
-        chan = chan[start:end+1]
-        depth = end - start
-        #depth = len(chan)
-        max_image = np.zeros_like(chan[start])
-        sum_image = np.zeros(chan[start].shape, dtype='float64')
-        mean_image = chan[start].astype('float64')
-        p = psutil.Process()
-        for i, frame in enumerate(chan):
-            if (i % 200) == 0:
-                mem_pct = p.memory_percent()
-                if mem_pct > 75:
-                    raise MemoryError('Too much memory used. Aborting process.')
-                print ('Processing frames at ({}/{}). '
-                       'Mem usage: {}%').format(i, depth, mem_pct)
-            max_image = np.maximum(max_image, frame)
-            sum_image = sum_image + frame
-            idx = i+1
-            if idx > 1:
-                img_weight = 1.0/idx
-                total_weight = (idx - 1.0)/idx
-                mean_image = mean_image*total_weight + frame*img_weight
-        sum_image = ((2**16-1) * (sum_image/(1.2*np.max(sum_image)))).astype('uint16')
-        mean_image = mean_image.astype('uint16')
-        np.save(self.maxppath.str, max_image)
-        np.save(self.meanppath.str, mean_image)
-        np.save(self.sumppath.str, sum_image)
-        print 'Done!'
+        ch1_exists = self.red_path.join_suffixes('.mmap.npy').exists()
+        if ch1_exists:
+            channels = [self.mmap, self.red_mmap]
+        else:
+            channels = [self.mmap]
+        for c, chan in enumerate(channels):
+            chan = chan[start:end+1]
+            depth = end - start
+            #depth = len(chan)
+            max_image = np.zeros_like(chan[start])
+            sum_image = np.zeros(chan[start].shape, dtype='float64')
+            mean_image = chan[start].astype('float64')
+            p = psutil.Process()
+            for i, frame in enumerate(chan):
+                if (i % 200) == 0:
+                    mem_pct = p.memory_percent()
+                    if mem_pct > 75:
+                        raise MemoryError('Too much memory used. Aborting process.')
+                    print ('Processing frames at ({}/{}). '
+                           'Mem usage: {}%').format(i, depth, mem_pct)
+                max_image = np.maximum(max_image, frame)
+                sum_image = sum_image + frame
+                idx = i+1
+                if idx > 1:
+                    img_weight = 1.0/idx
+                    total_weight = (idx - 1.0)/idx
+                    mean_image = mean_image*total_weight + frame*img_weight
+            sum_image = ((2**16-1) * (sum_image/(1.2*np.max(sum_image)))).astype('uint16')
+            mean_image = mean_image.astype('uint16')
+            if c == 0:
+                np.save(self.maxppath.str, max_image)
+                np.save(self.meanppath.str, mean_image)
+                np.save(self.sumppath.str, sum_image)
+            else:
+                np.save(self.red_maxppath.str, max_image)
+                np.save(self.red_meanppath.str, mean_image)
+                np.save(self.red_sumppath.str, sum_image)
+            print 'Done!'
     @memoized_property
     def meta(self):
         return ScanboxChannelMeta.load(self.metapath.str)

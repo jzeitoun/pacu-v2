@@ -7,6 +7,9 @@ from . import parser
 from . import metavars
 from .. import profile
 
+import matplotlib
+matplotlib.use('Agg')
+
 if len(sys.argv) == 1:
     parser.print_help()
     parser.exit()
