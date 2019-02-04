@@ -47,7 +47,19 @@ class Export(object):
                 2: {'green': self.io.ch0},
                 3: {'red': self.io.ch0}
                 }
-        channel_layout = channel_map[self.io.mat.channels]
+        mesoscope_channel_map = {
+
+                }
+        if self.io.mat.channels is not -1:
+            channel_layout = channel_map[self.io.mat.channels]
+        else:
+            sample = self.io.mat.chan.sample
+            if sample[0] and sample[1]:
+                channel_layout = {'green': self.io.ch0, 'red': self.io.ch1}
+            elif sample[0] and not sample[1]:
+                channel_layout = {'green': self.io.ch0}
+            elif not sample[0] and sample[1]:
+                channel_layout = {'red': self.io.ch0}
 
         filtered_rois = [roi for roi in self.rois if roi.id in self.ids]
         roi_map = {roi.id: roi for roi in filtered_rois}
