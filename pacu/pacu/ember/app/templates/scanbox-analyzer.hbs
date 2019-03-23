@@ -176,12 +176,12 @@
                 <div class="flex-container">
                   <label for="green-min">Min:</label>
                   {{input id="green-min" class="contrast-slider" type="range" min=0
-                    max=255 value=stream.img.min}}
-                  {{input value=stream.img.min class="control-panel"}}
+                    max=65535 value=stream.img.min}}
+                  {{input value=stream.img.min class="control-panel" keyDown=(action "updateGreenMin")}}
                   <label class="max" for="green-max">Max:</label>
                   {{input id="green-max" class="contrast-slider" type="range" min=0
-                    max=255 value=stream.img.max}}
-                  {{input value=stream.img.max class="control-panel"}}
+                    max=65535 value=stream.img.max}}
+                  {{input value=stream.img.max class="control-panel" keyDown=(action "updateGreenMax")}}
                 </div>
               </fieldset>
             </div>
@@ -193,12 +193,12 @@
                 <div class="flex-container">
                   <label for="red-min">Min:</label>
                   {{input id="red-min" class="contrast-slider" type="range" min=0
-                    max=255 value=stream.img.red_min}}
-                  {{input value=stream.img.red_min class="control-panel"}}
+                    max=65535 value=stream.img.red_min}}
+                  {{input value=stream.img.red_min class="control-panel" keyDown=(action "updateRedMin")}}
                   <label class="max" for="red-max">Max:</label>
                   {{input id="red-max" class="contrast-slider" type="range" min=0
-                    max=255 value=stream.img.red_max}}
-                  {{input value=stream.img.red_max class="control-panel"}}
+                    max=65535 value=stream.img.red_max}}
+                  {{input value=stream.img.red_max class="control-panel" keyDown=(action "updateRedMax")}}
                 </div>
               </fieldset>
             </div>
@@ -505,6 +505,7 @@
           neuropilRatio=model.firebaseWorkspace.neuropil_ratio
           resync=(action "resync")
           autoSync=autoSync
+          roisVisible=roisVisible
           contrastMin=stream.img.min
           contrastMax=stream.img.max}}
 
@@ -538,6 +539,17 @@
       <h3>Shortcuts</h3>
       <li>"m" :  <span class={{if placeMode "active-mode"}}>Place Mode</span></li>
       <li>"d" :  <span class={{if disableHandles "active-mode"}}>Disable Handles</span></li>
+      <li>"h" :  <span class={{if roisVisible "active-mode"}}>ROIs Visible</span></li>
+      <br>
+      <li>"s" :  <span>Toggle "ROI Position Sync"</span></li>
+      <li>"," :  <span>Seek Back</span></li>
+      <li>"." :  <span>Seek Forward</span></li>
+      <li>"Ctrl + a" :  <span>Select All</span></li>
+      <br>
+      <li>"q" :  <span>Contrast Min: Decrease</span></li>
+      <li>"w" :  <span>Contrast Min: Increase</span></li>
+      <li>"e" :  <span>Contrast Max: Decrease</span></li>
+      <li>"r" :  <span>Contrast Max: Increase</span></li>
          {{!--style={{stream.mainCanvasDimension.parallelContainerStyle}}>
       {{#each model.workspace.loadedROIs as |roi index|}}-
         {{#each model.rois as |roi index|}}

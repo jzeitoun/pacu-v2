@@ -251,6 +251,9 @@ export default Ember.Component.extend({
         case 'm':
           this.toggleProperty('placeMode');
           break;
+        case 'h':
+          this.toggleProperty('roisVisible');
+          break;
         case 'n':
           this.toggleProperty('neuropilEnabled');
           break;
@@ -302,7 +305,8 @@ export default Ember.Component.extend({
           }
           break;
         case 'w':
-          if (contrastMin < 255) {
+          let contrastMax = this.get('contrastMax');
+          if (contrastMin < contrastMax) {
             this.set('contrastMin', contrastMin + 1);
           }
           break;
@@ -312,7 +316,7 @@ export default Ember.Component.extend({
           }
           break;
         case 'r':
-          if (contrastMax < 255) {
+          if (contrastMax < 65535) {
             this.set('contrastMax', contrastMax + 1);
           }
           break;

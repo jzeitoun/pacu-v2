@@ -86,19 +86,31 @@ class ScanboxChannel(object):
         self.cmap = colormaps['Gray']
         self.channel_display = 'Green'
         self.min_val = 0
-        self.max_val = 255
+        self.max_val = self._mmap[self.c_focal_pane::self.n_focal_pane][0] if self.path.exists() else 65535
         self.red_min_val = 0
-        self.red_max_val = 255
+        self.red_max_val = self.red_mmap[self.c_focal_pane::self.n_focal_pane][0] if self.red_path.exists() else 65535
     @memoized_property
     def blue_channel(self):
         return np.zeros(self.shape[1:], dtype='uint8')
     @memoized_property
     def alpha_channel(self):
         return np.full(self.shape[1:], 255, dtype='uint8')
-    def scale(self, array):
-        return (255 * (np.float64(array) - self.min_val)) / (self.max_val - self.min_val)
-    def red_scale(self, array):
-        return (255 * (np.float64(array) - self.red_min_val)) / (self.red_max_val - self.red_min_val)
+    def scale(self, array, min_val, max_val):
+        # https://stackoverflow.com/questions/5294955/how-to-scale-down-a-range-of-numbers-with-a-known-min-and-max-value
+        return  ((max_val - min_val) * (np.float64(array) - self.min_val) / (self.max_val - self.min_val)) + min_val
+    def red_scale(self, array, min_val, max_val):
+        # https://stackoverflow.com/questions/5294955/how-to-scale-down-a-range-of-numbers-with-a-known-min-and-max-value
+        return  ((max_val - min_val) * (np.float64(array) - self.red_min_val) / (self.red_max_val - self.red_min_val)) + min_val
+    def clamp(self, array):
+        _array = array.copy()
+        _array[_array < self.min_val] = self.min_val
+        _array[_array > self.max_val] = self.max_val
+        return _array
+    def red_clamp(self, array):
+        _array = array.copy()
+        _array[_array < self.red_min_val] = self.red_min_val
+        _array[_array > self.red_max_val] = self.red_max_val
+        return _array
     def import_with_io(self, io):
         print 'Import channel {}.'.format(self.channel)
         if io.mat.scanmode == 0:
@@ -154,12 +166,16 @@ class ScanboxChannel(object):
         return self.sumppath.is_file()
     def request_frame(self, index):
         if self.channel_display == 'Green':
-            return self.cmap8bit.to_rgba(self.mmap8bit[index], bytes=True).tostring()
+            return self.cmap8bit.to_rgba(self.mmap8bit(index), bytes=True, norm=False).tostring()
+            #return self.cmap8bit.to_rgba(self.mmap8bit(index), bytes=True).tostring()
         elif self.channel_display == 'Red':
-            return self.cmap8bit.to_rgba(self.red_mmap8bit[index], bytes=True).tostring()
+            return self.cmap8bit.to_rgba(self.red_mmap8bit(index), bytes=True, norm=False).tostring()
+            #return self.cmap8bit.to_rgba(self.red_mmap8bit[index], bytes=True).tostring()
         elif self.channel_display == 'Both':
-            red_channel = self.red_scale(self.red_mmap8bit[index]).astype('uint8')
-            green_channel = self.scale(self.mmap8bit[index]).astype('uint8')
+            red_channel = self.red_mmap8bit(index)
+            #red_channel = self.red_scale(self.red_mmap8bit[index]).astype('uint8')
+            green_channel = self.mmap8bit(index)
+            #green_channel = self.scale(self.mmap8bit[index]).astype('uint8')
             return np.stack((
                 red_channel,
                 green_channel,
@@ -186,26 +202,39 @@ class ScanboxChannel(object):
     def set_cmap(self, cmap):
         self.cmap = colormaps[cmap]
     def set_contrast(self, min_val, max_val):
+        try:
             self.min_val = int(min_val)
             self.max_val = int(max_val)
+        except ValueError:
+            print('Invalid contrast value.')
     def set_rgb_contrast(self, min_val, max_val, red_min_val, red_max_val):
+        try:
             self.min_val = int(min_val)
             self.max_val = int(max_val)
             self.red_min_val = int(red_min_val)
             self.red_max_val = int(red_max_val)
+        except ValueError:
+            print('Invalid contrast value.')
     def set_channel(self, channel):
         self.channel_display = channel
-    @memoized_property
-    def mmap8bit(self):
-        return self._mmap.view('uint8'
-            )[self.c_focal_pane::self.n_focal_pane, :, 1::2]
-    @memoized_property
-    def red_mmap8bit(self):
-        return self.red_mmap.view('uint8'
-            )[self.c_focal_pane::self.n_focal_pane, :, 1::2]
+    #@memoized_property
+    def mmap8bit(self, index):
+        clamped = self.clamp(self._mmap[self.c_focal_pane::self.n_focal_pane][index])
+        #return (scaled/scaled.max() * 255).astype('uint8')
+        frame = self.scale(clamped, 0, 255).astype('uint8')
+        return frame
+        #return self._mmap.view('uint8'
+        #    )[self.c_focal_pane::self.n_focal_pane, :, 1::2]
+    #@memoized_property
+    def red_mmap8bit(self, index):
+        clamped = self.red_clamp(self.red_mmap[self.c_focal_pane::self.n_focal_pane][index])
+        #return (scaled/scaled.max() * 255).astype('uint8')
+        return self.red_scale(clamped, 0, 255).astype('uint8')
+        #return self.red_mmap.view('uint8'
+        #    )[self.c_focal_pane::self.n_focal_pane, :, 1::2]
     @property
     def cmap8bit(self):
-        return ScalarMappable(norm=self.norm, cmap=self.cmap)
+        return ScalarMappable(cmap=self.cmap)
     @property
     def norm(self):
         if self.channel_display == 'Green':

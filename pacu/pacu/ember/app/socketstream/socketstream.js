@@ -1,6 +1,8 @@
 import Ember from 'ember';
 import EmberObject, { computed, observer } from '@ember/object';
 
+import { debounce } from '@ember/runloop';
+
 const Image = EmberObject.extend({
   //mpi: false,
   projection: Ember.computed('maxp', 'meanp', 'sump', function() {
@@ -30,15 +32,15 @@ const Image = EmberObject.extend({
       return false;
     };
   }),
-  max: 255, // added to control colormap contrast (JZ)
+  max: 65535, // added to control colormap contrast (JZ)
   min: 0, // added to control colormap contrast (JZ)
-  red_max: 255,
+  red_max: 65535,
   red_min: 0,
-  maxp_max: 255, // added to control colormap contrast (JZ)
+  maxp_max: 65535, // added to control colormap contrast (JZ)
   maxp_min: 0, // added to control colormap contrast (JZ)
-  meanp_max: 255, // added to control colormap contrast (JZ)
+  meanp_max: 65535, // added to control colormap contrast (JZ)
   meanp_min: 0, // added to control colormap contrast (JZ)
-  sump_max: 255, // added to control colormap contrast (JZ)
+  sump_max: 65535, // added to control colormap contrast (JZ)
   sump_min: 0, // added to control colormap contrast (JZ)
   maxIndex: computed('depth', function() {
     return this.get('depth') - 1;
@@ -142,6 +144,7 @@ export default EmberObject.extend({
 
   setRGBContrast() {
     var {'img.min':min, 'img.max':max, 'img.red_min':red_min, 'img.red_max':red_max} = this.getProperties('img.min', 'img.max', 'img.red_min', 'img.red_max');
+    //debounce(this.get('wsx'), 'invokeAsBinary', ('ch0.set_rgb_contrast', min, max, red_min, red_max), 250, true);
     this.get('wsx').invokeAsBinary(
       'ch0.set_rgb_contrast', min, max, red_min, red_max
     );
@@ -224,7 +227,7 @@ export default EmberObject.extend({
     if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
       Ember.run.debounce(this, () => this.requestProjection(this.get('img.projection')), 150);
     } else {
-      Ember.run.debounce(this, () => this.requestFrame(this.get('img.curIndex')), 150);
+      Ember.run.debounce(this, () => this.requestFrame(this.get('img.curIndex')), 250);
     };
   },
 

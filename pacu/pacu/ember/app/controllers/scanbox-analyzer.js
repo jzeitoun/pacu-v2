@@ -37,6 +37,7 @@ export default Controller.extend({
   exportModalVisibility: false,
   insertModalVisibility: false,
   autoSync: true,
+  roisVisible: true,
 
   actions: {
     monitorFirebaseConnection() {
@@ -646,6 +647,46 @@ export default Controller.extend({
       this.model.stream.set('img.channelDisplay', channel);
       this.toast.info(`Channel display set to ${channel}`);
     },
+
+    updateGreenMin(event) {
+      let min = this.model.stream.get('img.min');
+      if (event.key == "ArrowDown" && min > 0) {
+        this.model.stream.set('img.min', parseInt(min) - 20)
+      }
+      if (event.key == "ArrowUp" && min < 65535) {
+        this.model.stream.set('img.min', parseInt(min) + 20)
+      }
+    },
+
+    updateGreenMax(event) {
+      let max = this.model.stream.get('img.max');
+      if (event.key == "ArrowDown" && max > 0) {
+        this.model.stream.set('img.max', parseInt(max) - 20)
+      }
+      if (event.key == "ArrowUp" && max < 65535) {
+        this.model.stream.set('img.max', parseInt(max) + 20)
+      }
+    },
+
+    updateRedMin(event) {
+      let red_min = this.model.stream.get('img.red_min');
+      if (event.key == "ArrowDown" && red_min > 0) {
+        this.model.stream.set('img.red_min', parseInt(red_min) - 20)
+      }
+      if (event.key == "ArrowUp" && red_min < 65535) {
+        this.model.stream.set('img.red_min', parseInt(red_min) + 20)
+      }
+    },
+
+    updateRedMax(event) {
+      let red_max = this.model.stream.get('img.red_max');
+      if (event.key == "ArrowDown" && red_max > 0) {
+        this.model.stream.set('img.red_max', parseInt(red_max) - 20)
+      }
+      if (event.key == "ArrowUp" && red_max < 65535) {
+        this.model.stream.set('img.red_max', parseInt(red_max) + 20)
+      }
+    }
 
     //updateFrameShift() {
     //  const current = this.model.workspace.get('params.frame_shift');
