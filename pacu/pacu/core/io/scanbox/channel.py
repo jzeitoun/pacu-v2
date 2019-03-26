@@ -184,21 +184,24 @@ class ScanboxChannel(object):
                 ), axis=0).transpose(1,2,0).tostring()
     def request_projection(self, image_type):
         if image_type == 'max':
-            if self.maxp.dtype == 'uint8':
-                proj = self.maxp
+            if self.maxp().dtype == 'uint8':
+                proj = self.maxp()
             else:
-                proj = self.maxp.view('uint8')[..., 1::2]
+                #proj = self.maxp.view('uint8')[..., 1::2]
+                proj = self.maxp().astype('uint8')
         elif image_type == 'mean':
-            if self.meanp.dtype == 'uint8':
-                proj = self.meanp
+            if self.meanp().dtype == 'uint8':
+                proj = self.meanp()
             else:
-                proj = self.meanp.view('uint8')[..., 1::2]
+                #proj = self.meanp()).view('uint8')[..., 1::2]
+                proj = self.meanp().astype('uint8')
         elif image_type == 'sum':
-            if self.sump.dtype == 'uint8':
-                proj = self.sump
+            if self.sump().dtype == 'uint8':
+                proj = self.sump()
             else:
-                proj = self.sump.view('uint8')[..., 1::2]
-        return self.cmap8bit.to_rgba(proj, bytes=True).tostring()
+                #proj = self.sump.view('uint8')[..., 1::2]
+                proj = self.sump().astype('uint8')
+        return self.cmap8bit.to_rgba(proj, bytes=True, norm=False).tostring()
     def set_cmap(self, cmap):
         self.cmap = colormaps[cmap]
     def set_contrast(self, min_val, max_val):
@@ -248,7 +251,7 @@ class ScanboxChannel(object):
         return DistortedColormap2('jet', xmid1=0.35, ymid1=0.65)
     def request_maxp_tiff(self):
         #arr = self.maxp.view('uint8')[..., 1::2]
-        arr = self.maxp
+        arr = self.maxp(export=True)
         i = Image.fromarray(arr)
         io = StringIO()
         i.save(io, format='tiff')
@@ -257,7 +260,7 @@ class ScanboxChannel(object):
         return value
     def request_meanp_tiff(self):
         #arr = self.meanp.view('uint8')[..., 1::2]
-        arr = self.meanp
+        arr = self.meanp(export=True)
         i = Image.fromarray(arr)
         io = StringIO()
         i.save(io, format='tiff')
@@ -266,22 +269,37 @@ class ScanboxChannel(object):
         return value
     def request_sump_tiff(self):
         #arr = self.sump.view('uint8')[..., 1::2]
-        arr = self.sump
+        arr = self.sump(export=True)
         i = Image.fromarray(arr)
         io = StringIO()
         i.save(io, format='tiff')
         value = io.getvalue()
         io.close()
         return value
-    @property
-    def maxp(self):
+    def maxp(self, export=False):
         if self.channel_display == 'Green':
-            return np.load(self.maxppath.str) if self.maxppath.is_file() else None
+            proj = np.load(self.maxppath.str) if self.maxppath.is_file() else None
+            if export:
+                return proj
+            clamped = self.clamp(proj)
+            return self.scale(clamped, 0, 255).astype('uint8')
         elif self.channel_display == 'Red':
-            return np.load(self.red_maxppath.str) if self.maxppath.is_file() else None
+            proj = np.load(self.red_maxppath.str) if self.maxppath.is_file() else None
+            clamped = self.red_clamp(proj)
+            if export:
+                return proj
+            return self.red_scale(clamped, 0, 255).astype('uint8')
         elif self.channel_display == 'Both':
-            red_channel = self.red_scale(np.load(self.red_maxppath.str).view('uint8')[..., 1::2]).astype('uint8')
-            green_channel = self.scale(np.load(self.maxppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            red_proj = np.load(self.red_maxppath.str)
+            green_proj = np.load(self.maxppath.str)
+            if export:
+                red_channel = red_pro.view('uint8')[..., 1::2].astype('uint8')
+                green_channel = green_pro.view('uint8')[..., 1::2].astype('uint8')
+            else:
+                red_channel = self.red_scale(self.red_clamp(red_proj), 0, 255).astype('uint8')
+                green_channel = self.scale(self.clamp(green_proj), 0, 255).astype('uint8')
+            #red_channel = self.red_scale(np.load(self.red_maxppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            #green_channel = self.scale(np.load(self.maxppath.str).view('uint8')[..., 1::2]).astype('uint8')
             return np.stack((
                 red_channel,
                 green_channel,
@@ -289,15 +307,30 @@ class ScanboxChannel(object):
                 self.alpha_channel
                 ), axis=0).transpose(1,2,0)#.tostring()
         #return np.load(self.maxppath.str) if self.maxppath.is_file() else None
-    @property
-    def meanp(self):
+    def meanp(self, export=False):
         if self.channel_display == 'Green':
-            return np.load(self.meanppath.str) if self.meanppath.is_file() else None
+            proj = np.load(self.meanppath.str) if self.meanppath.is_file() else None
+            if export:
+                return proj
+            clamped = self.clamp(proj)
+            return self.scale(clamped, 0, 255).astype('uint8')
         elif self.channel_display == 'Red':
-            return np.load(self.red_meanppath.str) if self.meanppath.is_file() else None
+            proj = np.load(self.red_meanppath.str) if self.meanppath.is_file() else None
+            if export:
+                return proj
+            clamped = self.red_clamp(proj)
+            return self.red_scale(clamped, 0, 255).astype('uint8')
         elif self.channel_display == 'Both':
-            red_channel = self.red_scale(np.load(self.red_meanppath.str).view('uint8')[..., 1::2]).astype('uint8')
-            green_channel = self.scale(np.load(self.meanppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            red_proj = np.load(self.red_meanppath.str)
+            green_proj = np.load(self.meanppath.str)
+            if export:
+                red_channel = red_pro.view('uint8')[..., 1::2].astype('uint8')
+                green_channel = green_pro.view('uint8')[..., 1::2].astype('uint8')
+            else:
+                red_channel = self.red_scale(self.red_clamp(red_proj), 0, 255).astype('uint8')
+                green_channel = self.scale(self.clamp(green_proj), 0, 255).astype('uint8')
+            #red_channel = self.red_scale(np.load(self.red_meanppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            #green_channel = self.scale(np.load(self.meanppath.str).view('uint8')[..., 1::2]).astype('uint8')
             return np.stack((
                 red_channel,
                 green_channel,
@@ -305,15 +338,30 @@ class ScanboxChannel(object):
                 self.alpha_channel
                 ), axis=0).transpose(1,2,0)#.tostring()
         #return np.load(self.meanppath.str) if self.meanppath.is_file() else None
-    @property
-    def sump(self):
+    def sump(self, export=False):
         if self.channel_display == 'Green':
-            return np.load(self.sumppath.str) if self.sumppath.is_file() else None
+            proj = np.load(self.sumppath.str) if self.sumppath.is_file() else None
+            if export:
+                return proj
+            clamped = self.clamp(proj)
+            return self.scale(clamped, 0, 255).astype('uint8')
         elif self.channel_display == 'Red':
-            return np.load(self.red_sumppath.str) if self.sumppath.is_file() else None
+            proj = np.load(self.red_sumppath.str) if self.sumppath.is_file() else None
+            if export:
+                return proj
+            clamped = self.red_clamp(proj)
+            return self.red_scale(clamped, 0, 255).astype('uint8')
         elif self.channel_display == 'Both':
-            red_channel = self.red_scale(np.load(self.red_sumppath.str).view('uint8')[..., 1::2]).astype('uint8')
-            green_channel = self.scale(np.load(self.sumppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            red_proj = np.load(self.red_sumppath.str)
+            green_proj = np.load(self.sumppath.str)
+            if export:
+                red_channel = red_pro.view('uint8')[..., 1::2].astype('uint8')
+                green_channel = green_pro.view('uint8')[..., 1::2].astype('uint8')
+            else:
+                red_channel = self.red_scale(self.red_clamp(red_proj), 0, 255).astype('uint8')
+                green_channel = self.scale(self.clamp(green_proj), 0, 255).astype('uint8')
+            #red_channel = self.red_scale(np.load(self.red_sumppath.str).view('uint8')[..., 1::2]).astype('uint8')
+            #green_channel = self.scale(np.load(self.sumppath.str).view('uint8')[..., 1::2]).astype('uint8')
             return np.stack((
                 red_channel,
                 green_channel,
