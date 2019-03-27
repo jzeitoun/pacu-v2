@@ -30,22 +30,21 @@
     height=selectRect.height}}
 {{/if}}
 
-{{#if roisVisible}}
-  {{#each rois as |roi|}}
-    {{x-layer/roi-manager-v2/roi
-      roi_id=roi.roi_id
-      points=roi.polygon
-      neuropilPoints=roi.neuropilPolygon
-      neuropilEnabled=neuropilEnabled
-      neuropilRatio=neuropilRatio
-      lastComputedPoints=roi.lastComputedPolygon
-      selected=roi.selected
-      dragging=roi.dragging
-      pointdrag=roi.pointdrag
-      targetPoint=roi.targetPoint
-      placeMode=placeMode
-      disableHandles=disableHandles
-      triggerUpdate=(action "triggerUpdate" roi.roi_id)
-      hover=roi.hover}}
-  {{/each}}
-{{/if}}
+{{#each rois as |roi|}}
+  {{x-layer/roi-manager-v2/roi
+    roi_id=roi.roi_id
+    points=roi.polygon
+    neuropilPoints=roi.neuropilPolygon
+    neuropilEnabled=neuropilEnabled
+    neuropilRatio=neuropilRatio
+    lastComputedPoints=roi.lastComputedPolygon
+    selected=roi.selected
+    dragging=roi.dragging
+    pointdrag=roi.pointdrag
+    targetPoint=roi.targetPoint
+    placeMode=placeMode
+    disableHandles=disableHandles
+    triggerUpdate=(action "triggerUpdate" roi.roi_id)
+    hover=roi.hover
+    visible=roisVisible}}
+{{/each}}

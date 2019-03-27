@@ -431,6 +431,10 @@ span.active-mode {
     100% { transform: rotate(360deg); }
 }
 
+.hidden {
+  display: None;
+}
+
 /*.dot {
   stroke: transparent;
   stroke-width: 10px;  

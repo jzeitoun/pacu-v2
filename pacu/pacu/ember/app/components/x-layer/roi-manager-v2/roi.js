@@ -30,6 +30,7 @@ function getNeuropilPoints(strPoints, ratio) {
 
 export default Component.extend({
   tagName: 'svg',
+  classNameBindings: ['visible::hidden'],
   inProgress: computed.equal('lastComputedPoints', 'inProgress'),
   computed: computed('points','lastComputedPoints', 'selected', function() {
     return (this.get('points') == this.get('lastComputedPoints')) && !this.get('inProgress') && !this.get('selected');
