@@ -13,7 +13,7 @@ from pacu.core.io.scanbox.method.orientation.bestpref_tf import tf_bestpref
 from . import extract_traces as et
 
 class Export(object):
-    def __init__(self, io, ws, condition, ids): #, rois):
+    def __init__(self, io, ws, condition, ids, debug=False): #, rois):
         self.io = io
         self.ws = ws
         self.condition = condition
@@ -22,6 +22,7 @@ class Export(object):
         self.ids = map(int, ids.split(','))
         self.rois = self.io.condition.workspaces.filter_by(name=self.ws)[0].rois
         self.roi_dict = {'{}{}'.format('cell_id_', roi.id) : roi.serialize() for roi in self.rois}
+        self.debug = debug
 
     def blank_responses(self, roi):
         if self.blank:
@@ -206,6 +207,8 @@ class Export(object):
 
         # Create new worksheet for each temporal frequency
         for tfreq in tfreqs:
+            if self.debug:
+                print(tfreq)
             ws = wb.create_sheet('TFreq {}'.format(tfreq))
 
             # format header columns
@@ -243,6 +246,8 @@ class Export(object):
                 cell.style = header
 
             for idx,roi in zip(idx_list, filtered_rois):
+                if self.debug:
+                    print(idx)
                 peak_sf = round(roi.dtsfreqfits.filter_by(trial_tf=tfreq).first.attributes['value']['peak'],2)
                 try:
                     if roi.dtanovaeachs.filter_by(trial_tf=tfreq).filter_by(trial_sf=peak_sf).first.p <= p_value:

@@ -203,10 +203,10 @@ class ScanboxIO(object):
                     roi.refresh_all()
                 except Exception as e:
                     print 'ERROR', e
-    def export_excel(self, ids, wsName):
+    def export_excel(self, ids, wsName, debug=False):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).excel()
-        return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).excel()
+        return Export(ScanboxIO(self.path), wsName, self.condition, str(ids), debug).excel()
     def export_matlab(self, ids, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).matlab()
