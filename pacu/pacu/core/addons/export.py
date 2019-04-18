@@ -87,6 +87,11 @@ class Export(object):
         json.dump(roi_output, sio)
         return sio.getvalue()
 
+    def json(self):
+        sio = StringIO()
+        json.dump(self.roi_dict, sio)
+        return sio.getvalue()
+
     def both(self):
         # Create in-memory zipfile
         zstring = StringIO()

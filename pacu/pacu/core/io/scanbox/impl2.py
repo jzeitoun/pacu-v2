@@ -219,6 +219,10 @@ class ScanboxIO(object):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
         return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).traces_json()
+    def export_json_all(self, ids, wsName):
+        active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
+        #return Export(self.path, wsName, self.condition, str(ids), active_workspace.rois).both()
+        return Export(ScanboxIO(self.path), wsName, self.condition, str(ids)).json()
     def insert_traces_json(self, payload, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         insert_traces(ScanboxIO(self.path), active_workspace, payload)

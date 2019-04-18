@@ -436,6 +436,26 @@ export default Controller.extend({
         toast.error(reason); });
     },
 
+    exportJSONAll() {
+      this.set('jsonExportModalVisibility', true);
+      var computedROIs = this.get('roiRecord').get('computed');
+      const {io, ws} = this.model.name;
+      const fname = io.split('.')[0];
+      const ids = [];
+      const toast = this.toast;
+      const modal = $('.ui.export-progress.modal');
+      for (var i=0; i<computedROIs.length; i++) {
+        ids.push(computedROIs[i].get('roi_id'));
+      }
+      this.model.stream.invokeAsBinary('export_json_all', ids.join(), ws).then(data => {
+        const ts = (new Date).toCustomString();
+        download.fromArrayBuffer(data, `${fname}-${ws}-${ts}-all.json`, 'application/json');
+        this.set('jsonExportModalVisibility', false);
+      }).catch(reason => {
+        this.set('jsonExportModalVisibility', false);
+        toast.error(reason); });
+    },
+
     loadJSONROIs() {
       Ember.$('#roi-import').click();
     },

@@ -385,6 +385,9 @@
           <span class="item" {{action "exportJSONTraces"}}>
             Raw Traces
           </span>
+          <span class="item" {{action "exportJSONAll"}}>
+            JSON
+          </span>
         </div>
       {{/ui-dropdown}}
 
@@ -446,6 +449,13 @@
     <div class="modal-container">
       <div class="loader"></div>
       <div class="ui centered inverted large header">Exporting ROI Traces...</div>
+    </div>
+  {{/custom-modal}}
+
+  {{#custom-modal id="json-export-modal" visibility=jsonExportModalVisibility}}
+    <div class="modal-container">
+      <div class="loader"></div>
+      <div class="ui centered inverted large header">Exporting data as JSON...</div>
     </div>
   {{/custom-modal}}
 
