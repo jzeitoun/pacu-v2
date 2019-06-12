@@ -60,7 +60,6 @@ export default EmberObject.extend({
   init() {
     this._super(...arguments);
     this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump', 'mat.channels', 'mat.chan.sample');
-    Ember.run.later(this, 'setChannelOptions', 100);
     const keysToObserve = ['min','max','red_min','red_max'];
     keysToObserve.forEach(key => {
       Ember.run.later(this, () => this.addObserver(`img.${key}`, this, 'contrastChanged'), 100);
@@ -80,52 +79,41 @@ export default EmberObject.extend({
     var ch = this.get('img.channel');
     return this.get('wsx').invokeAsBinary(
         'ch0.request_frame', parseInt(index)).then(buffer => { console.log('frame received');
-      this.set('img.buffer', buffer);
+      this.get('img').set('buffer', buffer);
     }).catch(reason => { console.log(reason); });
   },
 
   setChannelOptions() {
-    /* Ugly Workaround */
     const channels = this.get('matChannels');
-    var channelSet = this.get('channelSet');
-    if ( (channels && !this.get('channelSet')) || (!channels && this.get('channelSet')) ) {
-      switch (channels) {
-        case -1 :
-          let activeChannels = this.get('matChanSample');
-          if (activeChannels[0] && activeChannels[1]) {
-            this.set('img.channelOptions', ['Green', 'Red', 'Both']);
-            this.set('img.channelDisplay', 'Green');
-            this.set('channelSet', true);
-          } else if (activeChannels[0] &! activeChannels[1]){
-            this.set('img.channelOptions', ['Green']);
-            this.set('img.channelDisplay', 'Green');
-            this.set('channelSet', true);
-          } else if (activeChannels[1] &! activeChannels[0]) {
-            this.set('img.channelOptions', ['Red']);
-            this.set('img.channelDisplay', 'Red');
-            this.set('channelSet', true);
-          }
-          break;
-        case 1 :
+    switch (channels) {
+      case -1 :
+        let activeChannels = this.get('matChanSample');
+        if (activeChannels[0] && activeChannels[1]) {
           this.set('img.channelOptions', ['Green', 'Red', 'Both']);
           this.set('img.channelDisplay', 'Green');
-          this.set('channelSet', true);
-          break;
-        case 2 :
+        } else if (activeChannels[0] &! activeChannels[1]){
           this.set('img.channelOptions', ['Green']);
           this.set('img.channelDisplay', 'Green');
-          this.set('channelSet', true);
-          break;
-        case 3 :
+        } else if (activeChannels[1] &! activeChannels[0]) {
           this.set('img.channelOptions', ['Red']);
           this.set('img.channelDisplay', 'Red');
-          this.set('channelSet', true);
-          break;
-        default :
-          return;
-      };
+        }
+        break;
+      case 1 :
+        this.set('img.channelOptions', ['Green', 'Red', 'Both']);
+        this.set('img.channelDisplay', 'Green');
+        break;
+      case 2 :
+        this.set('img.channelOptions', ['Green']);
+        this.set('img.channelDisplay', 'Green');
+        break;
+      case 3 :
+        this.set('img.channelOptions', ['Red']);
+        this.set('img.channelDisplay', 'Red');
+        break;
+      default :
+        return;
     };
-      /* End Ugly Workaround */
   },
 
   requestProjection(image_type) {
@@ -173,37 +161,14 @@ export default EmberObject.extend({
       'ch0.set_contrast', min, max)
   },
 
+  channelsSet: observer('matChannels', function() {
+    this.setChannelOptions();
+  }),
   indexChanged: observer('img.curIndex', function() {
     console.log('index changed');
     //this.setRGBContrast();
     this.requestFrame(this.get('img.curIndex'));
   }),
-  //channelChanged: observer('img.channelDisplay', function() {
-  //  console.log('channel changed');
-  //  //this.setRGBContrast();
-  //  this.get('wsx').invokeAsBinary(
-  //    'ch0.set_channel', this.get('img.channelDisplay')
-  //  );
-  //  this.requestFrame(this.get('img.curIndex'));
-  //}),
-  //cmapChanged: observer('img.cmap', function() {
-  //  console.log('cmap changed');
-  //  this.setCmap(this.get('img.cmap')); // added cmap argument JZ
-  //  if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
-  //    this.requestProjection(this.get('img.projection'));
-  //  } else {
-  //    this.requestFrame(this.get('img.curIndex'));
-  //  };
-  //}),
-  //contrastChanged: observer('img.{min,max,red_min,red_max}', function() {
-  //  console.log('contrast changed');
-  //  //this.setRGBContrast();
-  //  if (this.get('img.maxp') || this.get('img.meanp') || this.get('img.sump')) {
-  //    Ember.run.debounce(this, () => this.requestProjection(this.get('img.projection')), 150);
-  //  } else {
-  //    Ember.run.debounce(this, () => this.requestFrame(this.get('img.curIndex')), 150);
-  //  };
-  //}),
   channelChanged: function() {
     console.log('channel changed');
     //this.setRGBContrast();
