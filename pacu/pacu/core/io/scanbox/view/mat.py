@@ -102,6 +102,23 @@ class ScanboxMatView(ZeroDimensionArrayView):
 #     def __dir__(self): # quick and dirty: need to use descriptor set
 #         return super(ScanboxInfoView, self).__dir__() + \
 #             'path nchan factor framerate recordsPerBuffer sz'.split()
+    @property
+    def activeChannels(self):
+        channels = self.channels
+        if channels == -1:
+            activeChannels = self.chan.sample
+            if activeChannels[0] and activeChannels[1]:
+                return ['Green', 'Red', 'Both']
+            elif activeChannels[0] and not activeChannels[1]:
+                return ['Green']
+            elif activeChannels[1] and not activeChannels[0]:
+                return ['Red']
+        elif channels == 0:
+            return ['Green', 'Red', 'Both']
+        elif channels == 1:
+            return ['Green']
+        elif channels == 2:
+            return ['Red']
 
     def toDict(self):
         data = self.items()

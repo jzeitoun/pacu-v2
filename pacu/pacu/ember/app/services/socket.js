@@ -102,6 +102,7 @@ class WebSocketEx {
     return this; // so that chain can go forth...
   }
   _mirror(route) {
+    debugger
     return this.makeRequest('access', route).then((data) => {
       this.context.set(route.camelize(), data);
     });

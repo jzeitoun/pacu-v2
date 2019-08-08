@@ -59,7 +59,7 @@ export default EmberObject.extend({
   invokeAsBinary(func, ...args) { return this.get('wsx').invokeAsBinary(func, ...args); },
   init() {
     this._super(...arguments);
-    this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump', 'mat.channels', 'mat.chan.sample');
+    this.mirror('ch0.dimension', 'ch0.has_meanp', 'ch0.has_maxp', 'ch0.has_sump', 'mat.activeChannels', 'mat.channels', 'mat.chan.sample');
     const keysToObserve = ['min','max','red_min','red_max'];
     keysToObserve.forEach(key => {
       Ember.run.later(this, () => this.addObserver(`img.${key}`, this, 'contrastChanged'), 100);
@@ -84,36 +84,9 @@ export default EmberObject.extend({
   },
 
   setChannelOptions() {
-    const channels = this.get('matChannels');
-    switch (channels) {
-      case -1 :
-        let activeChannels = this.get('matChanSample');
-        if (activeChannels[0] && activeChannels[1]) {
-          this.set('img.channelOptions', ['Green', 'Red', 'Both']);
-          this.set('img.channelDisplay', 'Green');
-        } else if (activeChannels[0] &! activeChannels[1]){
-          this.set('img.channelOptions', ['Green']);
-          this.set('img.channelDisplay', 'Green');
-        } else if (activeChannels[1] &! activeChannels[0]) {
-          this.set('img.channelOptions', ['Red']);
-          this.set('img.channelDisplay', 'Red');
-        }
-        break;
-      case 1 :
-        this.set('img.channelOptions', ['Green', 'Red', 'Both']);
-        this.set('img.channelDisplay', 'Green');
-        break;
-      case 2 :
-        this.set('img.channelOptions', ['Green']);
-        this.set('img.channelDisplay', 'Green');
-        break;
-      case 3 :
-        this.set('img.channelOptions', ['Red']);
-        this.set('img.channelDisplay', 'Red');
-        break;
-      default :
-        return;
-    };
+    const activeChannels = this.get('matActiveChannels');
+    this.set('img.channelOptions', activeChannels);
+    this.set('img.channelDisplay', activeChannels[0]);
   },
 
   requestProjection(image_type) {
