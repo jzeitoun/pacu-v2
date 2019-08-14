@@ -113,11 +113,11 @@ class ScanboxMatView(ZeroDimensionArrayView):
                 return ['Green']
             elif activeChannels[1] and not activeChannels[0]:
                 return ['Red']
-        elif channels == 0:
-            return ['Green', 'Red', 'Both']
         elif channels == 1:
-            return ['Green']
+            return ['Green', 'Red', 'Both']
         elif channels == 2:
+            return ['Green']
+        elif channels == 3:
             return ['Red']
 
     def toDict(self):
