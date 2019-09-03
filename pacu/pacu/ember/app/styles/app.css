@@ -311,6 +311,16 @@ polygon.selected, polygon.dragging, polygon.neuropil.selected, polygon.neuropil.
   border-radius: 0.5rem;
 }
 
+.project-input.mongo {
+  width: 500px;
+  flex-direction: column;
+}
+
+
+.project-input.mongo > div{
+  margin: 2px;
+}
+
 .projection-prompt input {
   padding: 0rem !important;
   text-align: center !important;
@@ -330,6 +340,17 @@ polygon.selected, polygon.dragging, polygon.neuropil.selected, polygon.neuropil.
   bottom: 0;
   top: 0;
   height: 17rem;
+  width: 50%;
+}
+
+#to-mongo {
+  position: fixed !important;
+  margin: auto !important;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  height: 40rem;
   width: 50%;
 }
 

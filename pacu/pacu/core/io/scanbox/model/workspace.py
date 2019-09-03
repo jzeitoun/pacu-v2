@@ -1,10 +1,6 @@
-import cPickle
-import operator
-
-from sqlalchemy import Column, UnicodeText, Float, Integer, Binary
+from sqlalchemy import Column, UnicodeText, Float, Integer
 from sqlalchemy.types import PickleType
 
-from pacu.ext.sqlalchemy.types.mutable import MutableDict
 from pacu.core.io.scanbox.model.base import SQLite3Base
 from pacu.core.io.scanbox.model.variant.workspace import VTWorkspaceParams
 
@@ -31,3 +27,33 @@ class Workspace(SQLite3Base):
         rois = list(self.rois)
         rois.remove(roi)
         return rois
+
+    def to_dict(self, owner, exp_name, project_name):
+
+        overlay_model = {
+            'owner': owner,
+            'cls': 'Rois',
+            'name': 'rois',
+            'rois': {str(roi.id): roi.to_dict(frame_offset=self.params['frame_shift']) for roi in self.rois}
+        }
+
+        project_model = {
+            'owner':                    owner,
+            'cls':                      'Project',
+            'name':                     project_name,
+        }
+        experiment_model = {
+            'owner':                    owner,
+            'cls':                      'Experiment',
+            'name':                     exp_name,
+            'project':                  project_model
+        }
+        workspace_model = {
+            'owner':                    owner,
+            'cls':                      'Workspace',
+            'name':                     str(self.name),
+            'experiment':               experiment_model,
+            'overlays':                 [overlay_model]
+        }
+
+        return workspace_model

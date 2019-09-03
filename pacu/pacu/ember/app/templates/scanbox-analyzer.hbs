@@ -388,6 +388,9 @@
           <span class="item" {{action "exportJSONAll"}}>
             JSON
           </span>
+          <span class="item" {{action "showModal" "to-mongo"}}>
+           Mongo
+          </span>
         </div>
       {{/ui-dropdown}}
 
@@ -407,16 +410,14 @@
     <div>
       <span>Select index range to use for projections.</span>
       <div class="project-input">
-        <div>
-          <div class="ui large labeled input">
-            <div class="ui blue label">Start</div>
-            {{input placeholder="" value=start}}
-          </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Start</div>
+          {{input placeholder="" value=start}}
         </div>
-          <div class="ui large labeled input">
-            <div class="ui blue label">End</div>
-            {{input placeholder="" value=end}}
-          </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">End</div>
+          {{input placeholder="" value=end}}
+        </div>
       </div>
       <div>
         <button class="fluid ui button" onclick={{action "createProjection" start end}}>Generate</button>
@@ -431,12 +432,20 @@
     </div>
   {{/ui-modal}}
 
+
   {{#ui-modal id="roiImport-progress" class="roiImport-progress inverted" closable=false}}
     <div class="modal-container">
       <div class="loader"></div>
       <div class="ui centered inverted large header">Importing ROIs...</div>
     </div>
   {{/ui-modal}}
+
+  {{#custom-modal id="export-mongo" visibility=exportMongoVisibility}}
+    <div class="modal-container">
+      <div class="loader"></div>
+      <div class="ui centered inverted large header">Exporting to Mongo...</div>
+    </div>
+  {{/custom-modal}}
 
   {{#custom-modal id="delete-modal" visibility=modalVisibility}}
     <div class="modal-container">
@@ -465,6 +474,52 @@
       <div class="ui centered inverted large header">Inserting ROI Traces...</div>
     </div>
   {{/custom-modal}}
+
+  {{#ui-modal id="to-mongo" class="projection-prompt"}}
+    <i class="close icon"></i>
+    <h2>Export To Mongo</h2>
+    <div class="ui clearing divider"></div>
+    <div>
+      <span>Input metadata.</span>
+      <div class="project-input mongo">
+        <div class="ui large labeled input">
+          <div class="ui blue label">Owner</div>
+          {{input placeholder="" value=mongoOwner}}
+        </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Experiment Name</div>
+          {{input placeholder="" value=mongoExpName}}
+        </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Project Name</div>
+          {{input placeholder="" value=mongoProjectName}}
+        </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Animal</div>
+          {{input placeholder="" value=mongoAnimal}}
+        </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Viewing</div>
+          {{input placeholder="" value=mongoViewing}}
+        </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Hemisphere</div>
+          {{input placeholder="" value=mongoHemisphere}}
+        </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Session ID</div>
+          {{input placeholder="" value=mongoSessionID}}
+        </div>
+        <div class="ui large labeled input">
+          <div class="ui blue label">Acquistion ID</div>
+          {{input placeholder="" value=mongoAcquisitionID}}
+        </div>
+      </div>
+      <div>
+        <button class="fluid ui button" onclick={{action "exportToMongo" mongoOwner mongoExpName mongoProjectName mongoAnimal mongoViewing mongoHemisphere mongoSessionID mongoAcquisitionID}}>Export</button>
+      </div>
+    </div>
+  {{/ui-modal}}
 
   {{!--  {{#if syncModalVisibility}}
     {{#custom-modal id="sync-modal" visibility=true}}

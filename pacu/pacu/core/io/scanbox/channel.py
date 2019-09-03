@@ -424,9 +424,16 @@ class ScanboxChannel(object):
         shape = (self.meta.z, self.meta.y, self.meta.x)
         root = os.path.split(self.mmappath.str)[0]
         red_path = os.path.join(root, '1.chan.mmap.npy')
-        return np.memmap(red_path,
-            mode='r', dtype=self.meta.dtype, shape=shape
-        )
+        if os.path.exists(red_path):
+            return np.memmap(red_path,
+                mode='r', dtype=self.meta.dtype, shape=shape
+            )
+        else:
+            red_path = os.path.join(root, '0.chan.mmap.npy')
+            return np.memmap(red_path,
+                mode='r', dtype=self.meta.dtype, shape=shape
+            )
+
     @memoized_property
     def mmap(self):
         return self._mmap[self.c_focal_pane::self.n_focal_pane, ...]

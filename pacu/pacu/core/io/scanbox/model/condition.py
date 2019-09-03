@@ -1,8 +1,5 @@
 import re
 from collections import namedtuple
-
-import cv2
-import numpy as np
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, UnicodeText, Float, Boolean, DateTime
@@ -115,3 +112,82 @@ class Condition(SQLite3Base):
     def timings(self):
         times = self.trials.map_by('on_time', 'off_time')
         return [(on, off, off-on-self.on_duration) for on, off in zip(times['on_time'], times['off_time'])]
+
+    def to_dict(self, owner, exp_name, project_name, animal, viewing, hemisphere, session_id, acquisition_id, workspace=None):
+
+        trial_models = []
+        for trial in self.trial_list:
+            if trial['flicker']:
+                typ = 'flicker'
+            elif trial['blank']:
+                typ = 'blank'
+            else:
+                typ = 'texture'
+
+            trial_models.append({
+                'cls': 'StimulusGratingTrial',
+                'type': typ,
+                'texture': 'sin',
+                'orientation': trial['ori'],
+                'contrast': trial['contrast'],
+                'temporal_frequency': trial['tf'],
+                'spatial_frequency': trial['sf'],
+            })
+
+        stimulus_model = {
+            'cls':                      'StimulusGrating',
+            'viewing_eyes':             viewing,
+            'view_distance':            self.dist,
+            'projection':               self.projection.replace('Projection', ''),
+            'viewport_height_cm':       self.height,
+            'viewport_height_px':       self.pixel_y,
+            'viewport_width_cm':        self.width,
+            'viewport_width_px':        self.pixel_x,
+            'gamma':                    self.gamma,
+
+            'handler':                 self.handler.replace('ExpV1Handler', 'scanbox'),
+
+            'repetitions':              int(self.repetition),
+            'textures':                 ['sin'],
+            'contrasts':                self.contrasts,
+            'orientations':             self.orientations,
+            'temporal_frequencies':     self.tfrequencies,
+            'spatial_frequencies':      self.sfrequencies,
+
+            'stimulus_on_duration':     self.on_duration,
+            'blank_duration':           self.off_duration,
+            'flicker_duration':         self.off_duration,
+            'n_trials':                 len(self.trial_list),
+            'trials':                   trial_models,
+
+            'log':                      self.message
+        }
+
+        self.info.update({'system': 'Neurolabware-Gandhi', 'cls': 'ImageMeta'})
+
+        image_model = {
+            'owner': owner,
+            'cls': 'Image',
+            'name': self.info['sbxpath'],
+            'sample': animal,
+            'session': session_id,
+            'acquisition': acquisition_id,
+            'hemisphere': hemisphere,
+            'acquisition_date': self.exp_created_at,
+            'metadata': self.info,
+            'stimulus': stimulus_model,
+        }
+
+        if workspace:
+            ws = self.workspaces.filter_by(name=str(workspace))[0]
+            workspace_models = [ws.to_dict(owner, exp_name, project_name)]
+        else:
+            workspace_models = [ws.to_dict(owner, exp_name, project_name) for ws in self.workspaces]
+
+        # add in ifo we couldn't add earlier
+        for ws in workspace_models:
+            ws['images'] = [image_model]
+            for ov in ws['overlays']:
+                ov['images'] = [image_model]
+
+        return workspace_models

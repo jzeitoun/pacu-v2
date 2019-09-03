@@ -36,6 +36,7 @@ export default Controller.extend({
   syncModalVisibility: false,
   exportModalVisibility: false,
   insertModalVisibility: false,
+  exportMongoVisibility: false,
   autoSync: true,
   roisVisible: true,
 
@@ -456,6 +457,22 @@ export default Controller.extend({
         toast.error(reason); });
     },
 
+    exportToMongo(owner, exp_name, project_name, animal, viewing, hemisphere, session_id, acquisition_id) {
+      $('#to-mongo').modal('hide');
+      this.set('exportMongoVisibility', true);
+      const controller = this;
+      const {io, ws} = this.model.name;
+      const toast = this.toast
+      this.model.stream.invokeAsBinary('to_mongo', ws, owner, exp_name, project_name, animal, viewing,
+        hemisphere, session_id, acquisition_id).then(data => {
+          this.set('exportMongoVisibility', false);
+        }).catch(reason => {
+          this.set('exportMongoVisibility', false);
+          toast.error(reason);
+          console.log(reason)
+        });
+    },
+
     loadJSONROIs() {
       Ember.$('#roi-import').click();
     },
@@ -529,12 +546,17 @@ export default Controller.extend({
     showProjection(name) {
       var maxIndex = this.model.stream.get('img.maxIndex');
       this.setProperties({'start': 0, 'end': maxIndex});
-      const modal = $('.ui.' + name + '.modal');
+      const modal = $('#projection-prompt');
+      modal.modal('show');
+    },
+
+    showModal(name) {
+      const modal = $('#' + name);
       modal.modal('show');
     },
 
     createProjection(start, end) {
-      const modal = $('.ui.projection-prompt.modal');
+      const modal = $('#projection-prompt');
       var numFrames = Number(end) - Number(start);
       const stream = this.model.stream;
       this.set('projBusy', true);

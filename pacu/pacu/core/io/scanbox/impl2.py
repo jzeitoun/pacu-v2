@@ -22,6 +22,10 @@ from pacu.core.addons.loadmat import loadmat, spio
 
 from pacu.core.addons.insert_traces import insert_traces
 
+from mongoengine import connect
+from pacu.core.addons.mongo_api.functions.generic import new_db
+from pacu.core.addons.mongo_api.models import User
+
 import os
 import shutil
 
@@ -226,6 +230,22 @@ class ScanboxIO(object):
     def insert_traces_json(self, payload, wsName):
         active_workspace = self.condition.workspaces.filter_by(name=str(wsName))[0]
         insert_traces(ScanboxIO(self.path), active_workspace, payload)
+
+    def to_mongo(self, wsName,
+                 owner, exp_name, project_name, animal, viewing, hemisphere, session_id, acquisition_id):
+
+        connect('jacu',
+            host='mongodb://glams.bio.uci.edu',
+            port=27017,
+            username='jacu',
+            password='mge2cortex')
+
+        user = User.objects(username=owner).first()
+
+        workspaces = self.condition.to_dict(user, exp_name, project_name, animal, viewing,
+                                    hemisphere, session_id, acquisition_id, workspace=wsName)
+        for ws in workspaces:
+            new_db(**ws)
 
 def open_sqlite(path):
     return schema.get_sessionmaker(path, echo=False)

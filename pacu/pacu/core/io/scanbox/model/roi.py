@@ -210,19 +210,115 @@ class ROI(SQLite3Base):
         if hasattr(self, 'meta'):
             resobj['attributes']['meta'] = self.meta
         return resobj
+
     def serialize(self):
         return serialize(self)
 
+    def to_dict(self, frame_offset):
 
+        print('exporting roi {} to dict'.format(self.id))
 
+        dff0_by_trial = {
+            'cls': 'TaskResult',
+            'inputs': {},
+            'params': {
+                'background_ratio': self.neuropil_factor,
+                'frame_offset':     frame_offset
+            },
+            'output': {
+                'traces': [t.value['on'] for t in self.dttrialdff0s if t.value],
+            }
+        }
 
+        orientations_mean = {
+            'cls': 'TaskResult',
+            'inputs': {
+                'trials': [{
+                    'orientations': [t.indices[ori] for ori in t.indices],
+                    'spatial_frequency': t.trial_sf,
+                    'temporal_frequency': t.trial_tf,
+                    'contrast': t.trial_contrast,
+                } for t in self.dtorientationsmeans],
+            },
+            'params': {},
+            'output': {
+                'traces': [t.matrix for t in self.dtorientationsmeans]
+            }
+        }
 
+        mean_orientations_fit = {
+            'cls': 'TaskResult',
+            'inputs': {},
+            'params': {
+                'a1_max':     self.dtorientationsfits[0].sog_params.a1_max,
+                'a1_min':     self.dtorientationsfits[0].sog_params.a1_min,
+                'a2_max':     self.dtorientationsfits[0].sog_params.a2_max,
+                'a2_min':     self.dtorientationsfits[0].sog_params.a2_min,
+                'offset_max': self.dtorientationsfits[0].sog_params.offset_max,
+                'offset_min': self.dtorientationsfits[0].sog_params.offset_min,
+                'sigma_max':  self.dtorientationsfits[0].sog_params.sigma_max,
+                'sigma_min':  self.dtorientationsfits[0].sog_params.sigma_min,
+            },
+            'output': {
+                'orientation': [zip(fit.value['x'],fit.value['y_fit'])for fit in self.dtorientationsfits if fit.value]
+            }
+        }
 
+        orientation_pref_fit = {
+            'cls': 'TaskResult',
+            'inputs': {},
+            'params': {},
+            'output': {
+                'orientation': self.dtorientationbestprefs[0].value
+            }
+        }
 
+        spatial_frequency_anova = {
+            'cls': 'TaskResult',
+            'inputs': {},
+            'params': {},
+            'output': {
+                'f': [t.f for t in self.dtanovaeachs],
+                'p': [t.p for t in self.dtanovaeachs]
+            }
+        }
 
+        anova_all = {
+            'cls': 'TaskResult',
+            'inputs': {},
+            'params': {},
+            'output': {
+                'f': self.dtanovaalls[0].value['f'],
+                'p': self.dtanovaalls[0].value['p']
+            } if self.dtanovaalls[0].value else {'f': None, 'p': None}
+        }
 
+        spatial_frequency_dog_fit = {
+            'cls': 'TaskResult',
+            'inputs': {
+                'spatial_frequencies': self.dtsfreqfits[0].value['sfx'],
+                'amplitudes':          self.dtsfreqfits[0].value['sfy'],
+            } if self.dtsfreqfits[0].value else {'spatial_frequencies': None, 'amplitudes': None},
+            'params': {},
+            'output': {
+                'spatial_frequencies': self.dtsfreqfits[0].value['dog_x_ext'],
+                'amplitudes':          self.dtsfreqfits[0].value['dog_y_ext'],
+            } if self.dtsfreqfits[0].value else {'spatial_frequencies': None, 'amplitudes': None},
+        }
 
+        roi_model = {
+            'cls':                  'Roi',
+            'coordinates':          [[coord['x'], coord['y']] for coord in self.polygon] if self.polygon else [],
+            'surround_offset':      self.neuropil_ratio,
+            'analysis':             {
+                'dff0_by_trial':             dff0_by_trial,
+                'orientations_mean':         orientations_mean,
+                'mean_orientations_fit':     mean_orientations_fit,
+                'orientation_pref_fit':      orientation_pref_fit,
+                'spatial_frequency_anova':   spatial_frequency_anova,
+                'anova_all':                 anova_all,
+                'spatial_frequency_dog_fit': spatial_frequency_dog_fit
+            }
+        }
 
-
-
-
+        return roi_model
