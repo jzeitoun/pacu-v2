@@ -101,14 +101,30 @@ class ROI(SQLite3Base):
             n_trials =  len(condition.trials)
             n_ontimes = len(condition.on_times_psychopy)
             if n_trials == n_ontimes:
-                for trial, ont in zip(condition.trials, condition.on_times_psychopy):
-                    dt = DTTrialDff0(roi=self)
-                    for attr in TRIAL_ATTRS:
-                        setattr(dt, u'trial_' + attr, getattr(trial, attr))
-                    dt.trial_on_time = ont
-            else:
+                # JZ: zip is unnecessary as the trial object already contains on_time;
+                # also adding feature to ignore trials with blank frames; 2-26-20
+
+                #for trial, ont in zip(condition.trials, condition.on_times_psychopy):
+                #    dt = DTTrialDff0(roi=self)
+                #    for attr in TRIAL_ATTRS:
+                #        setattr(dt, u'trial_' + attr, getattr(trial, attr))
+                #    dt.trial_on_time = ont
                 for trial in condition.trials:
                     dt = DTTrialDff0(roi=self)
+                    dt.ignore = trial.ignore
+                    for attr in TRIAL_ATTRS:
+                        setattr(dt, u'trial_' + attr, getattr(trial, attr))
+                    dt.trial_on_time = trial.on_time
+            else:
+                # JZ: adding feature to ignore trials with blank frames; 2-26-20
+
+                #for trial in condition.trials:
+                #    dt = DTTrialDff0(roi=self)
+                #    for attr in TRIAL_ATTRS:
+                #        setattr(dt, u'trial_' + attr, getattr(trial, attr))
+                for trial in condition.trials:
+                    dt = DTTrialDff0(roi=self)
+                    dt.ignore = trial.ignore
                     for attr in TRIAL_ATTRS:
                         setattr(dt, u'trial_' + attr, getattr(trial, attr))
         if not self.dtorientationsmeans:

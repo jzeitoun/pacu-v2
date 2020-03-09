@@ -42,6 +42,17 @@ def fix_incremental(meta, bind):
                         sql += ' NOT NULL'
                     print 'executing sql: ' + sql
                     conn.execute(sql)
+
+            # Workaround to ensure updated DBs start with "False" in ignore column
+            if list(col_to_create)[0] == 'ignore':
+                sessionmaker = get_sessionmaker(bind.url.database)
+                session = sessionmaker()
+                query_object = {'dttrialdff0s': DTTrialDff0, 'trials': Trial}[table.name]
+                items = session.query(query_object).all()
+                for item in items:
+                    item.ignore = False
+                session.flush()
+
         if col_to_delete:
             print table.name, 'has diff to delete', col_to_delete, 'maybe later version.'
             """

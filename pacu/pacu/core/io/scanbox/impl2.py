@@ -42,6 +42,8 @@ class ScanboxIO(object):
         self.sbx_path = opt.scanbox_root.joinpath(path).with_suffix('.sbx')
         self.cur_pane = cur_pane
         self.confirm_mat() # JZ confirm mat file is copied to io directory
+        self.blank_frames = []
+        self.confirm_ignore() # JZ confirms database has ignore columns
     @property
     def mat(self):
         return ScanboxMatView(self.mat_path)
@@ -72,20 +74,39 @@ class ScanboxIO(object):
             if 'stempath' not in info:
                 info['stempath'] = self.root_mat_path.stempath.str
                 spio.savemat(self.mat_path.str, {'info': info})
+    def confirm_ignore(self):
+        from pacu.core.io.scanbox.model.relationship import Trial
+        try:
+            self.db_session.query(Trial).first()
+        except:
+            print('Updating database to include ignore columns.')
+            self.fix_db_schema()
     def import_raw(self, condition_id=None):
         if self.path.is_dir():
             raise OSError('{} already exists!'.format(self.path))
         else:
             self.path.mkdir_if_none()
         self.confirm_mat()
+
         print 'Converting raw data...'
         for nchan in range(self.mat.nchannels):
             ScanboxChannel(self.path.joinpath('{}.chan'.format(nchan))
             ).import_with_io(self)
+        self.blank_frames = list(set(self.blank_frames)) # Ensure no duplicates
+        print(self.blank_frames) # Debug
         print 'Initialize local database...'
         self.initialize_db(condition_id)
+        self.drop_trials()
         print 'Done!'
         return self.toDict()
+    def drop_trials(self):
+        for i, trial in enumerate(self.condition.trials):
+            framerate = self.mat.framerate
+            start_frame = framerate * trial.attributes['on_time']
+            end_frame = framerate * trial.attributes['off_time'] + framerate * self.condition.off_duration
+            if any([start_frame < idx < end_frame for idx in self.blank_frames]) or i == 0:
+                trial.ignore = True
+        self.db_session.flush() # Commit changes
     @memoized_property
     def sessionmaker(self):
         maker = schema.get_sessionmaker(self.db_path, echo=False)

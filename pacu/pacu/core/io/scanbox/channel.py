@@ -42,13 +42,23 @@ colormaps = {
     }
 
 def converter(index_set):
+    blank_frames = []
     for idx in index_set:
-        globe.sink[idx] = ~globe.source[idx]
-        globe.sink[idx][globe.sink[idx]==65535] = 0 # To ensure alignment margins are black
+        source_frame = globe.source[idx]
+        if source_frame.max() == 0:
+            blank_frames.append(idx)
+        else:
+            globe.sink[idx] = ~source_frame
+            globe.sink[idx][globe.sink[idx]==65535] = 0 # To ensure alignment margins are black
+    return blank_frames
 
 def alt_converter(index_set):
+    blank_frames = []
     for idx in index_set:
         globe.sink[idx] = globe.source[idx]
+        if globe.sink[idx].max() == 0:
+            blank_frames.append(idx)
+    return blank_frames
 
 class ScanboxChannelMeta(object):
     __repr__ = repr.auto_strict
@@ -145,12 +155,13 @@ class ScanboxChannel(object):
         process_pool = multiprocessing.Pool(1)
         print 'Data contains {} channels and {} frames per channel'.format(io.mat.nchannels, depth)
         func = converter if not 'converted_tif' in self.path.str else alt_converter
-        for i,_ in enumerate(process_pool.imap_unordered(func, index_sets), 1):
+        for i, blank_frames in enumerate(process_pool.imap_unordered(func, index_sets), 1):
             mem_pct = p.memory_percent()
             if mem_pct > 75:
                 raise MemoryError('Too much memory used. Process aborted.')
             print ('Finished frame {}/{}). '
                    'Mem usage {}%').format(i*100, depth, mem_pct)
+            io.blank_frames = io.blank_frames + blank_frames
         meta = ScanboxChannelMeta('uint16', depth, int(height), int(width))
         meta.save(self.metapath.str)
         print 'Converting done!'

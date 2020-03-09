@@ -159,6 +159,15 @@ def handle_single(workspace, condition, roi, datatag, n_panes):
         baseline_trace_f_0 = np.concatenate([baseline_trace_f_0,
             np.full(bs_frames-length_bs, np.nan)])
 
+    # JZ: Trials that have blank frames will replace df/f0 with NaN values; 2-26-20
+    try:
+        if datatag.ignore == True:
+            print ('Trial #{} has blank frames, filling with NaNs.').format(datatag.trial_order)
+            on_trace_f_0[:] = np.nan
+            baseline_trace_f_0[:] = np.nan
+    except:
+        pass
+
     return dict(on=on_trace_f_0.tolist(), baseline=baseline_trace_f_0.tolist())
 
 def get_trial_indices(workspace, condition, datatag):

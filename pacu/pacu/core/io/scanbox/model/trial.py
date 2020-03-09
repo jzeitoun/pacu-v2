@@ -18,3 +18,4 @@ class Trial(SQLite3Base):
     ran = Column(Integer)
     flicker = Column(Boolean, default=False)
     blank = Column(Boolean, default=False)
+    ignore = Column(Boolean, default=False, nullable=True)
