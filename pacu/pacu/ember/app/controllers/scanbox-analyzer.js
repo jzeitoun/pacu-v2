@@ -90,6 +90,26 @@ export default Controller.extend({
 
     batchDeleteROI() {
       const selectedROIs = this.get('roiRecord.selected');
+      const allROIs = this.get('roiRecord.all');
+
+      let selectedIDs = selectedROIs.map(roi => {
+          return roi.get('roi_id')
+      })
+
+      let allIDs = allROIs.map(roi => {
+          return roi.get('roi_id')
+      })
+
+      let remainingIDs = allIDs.filter(id => !selectedIDs.includes(id))
+
+      if (remainingIDs.length) {
+        var maxID = remainingIDs.reduce(function(a, b) {
+          return Math.max(a, b);
+        });
+      } else {
+        var maxID = 0;
+      };
+
       const database = firebase.database();
       const updates = {}
       const wsID = this.model.firebaseWorkspace.id;
@@ -103,18 +123,6 @@ export default Controller.extend({
         };
         // push updates to database
         database.ref().update(updates).then(() => {
-          // Set count to max ID after deleting
-          var remainingROIs = this.get('roiRecord.all');
-          var remainingIDs = remainingROIs.map(function(roi) {
-            return roi.get('roi_id');
-          })
-          if (remainingIDs.length) {
-            var maxID = remainingIDs.reduce(function(a, b) {
-              return Math.max(a, b);
-            });
-          } else {
-            var maxID = 0;
-          };
           this.model.file.set('roi_count', maxID);
           this.set('modalVisibility', false);
         });
