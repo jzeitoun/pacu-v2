@@ -13,6 +13,7 @@ from ..inspect import repr
 from ..str.poly import polymorphicStr
 from ..module.mock import MockModule
 
+
 user_profile_path = identity.path.userenv.joinpath('profile')
 
 class MockCompanion(MockModule):
@@ -59,7 +60,7 @@ class Profile(object):
         kvs = [(option, polymorphicStr(config.get(section, option)))
                 for option in config.options(section)]
         overrider = {key: polymorphicStr(val)
-                for key, val in self.overrider.items()}
+                for key, val in list(self.overrider.items())}
         proxy = SectionProxy(section, OrderedDict(kvs, **overrider))
         companion = self.py # companion
         init = getattr(companion, section, None) or companion.default
@@ -83,7 +84,7 @@ class Profile(object):
             try:
                 return self.section(val)
             except:
-                print 'env profile', val, 'seems not working.'
+                print(('env profile', val, 'seems not working.'))
     _current = None
     @property
     def current(self):
@@ -91,7 +92,7 @@ class Profile(object):
             try:
                 return self.section(self._current)
             except:
-                print 'env profile', self._current, 'seems not working.'
+                print(('env profile', self._current, 'seems not working.'))
     @current.setter
     def current(self, val):
         self._current = val # validation required
@@ -121,7 +122,7 @@ class Profile(object):
     def remove(self):
         os.remove(self.user.str)
     def reset(self):
-        self.user.write(unicode(self.blueprint), mode='w')
+        self.user.write(str(self.blueprint), mode='w')
     @property
     def blueprint(self):
         return '\n'.join(

@@ -16,6 +16,7 @@ def main(workspace, condition, roi, datatag, dff0s=None, fits=None):
         dts = fits.filter_by(trial_contrast=datatag.trial_contrast, trial_tf=datatag.trial_tf)
     else:
         dts = fits.filter_by(trial_contrast=datatag.trial_contrast)
+
     bls = dff0s.filter_by(trial_blank=True)
     fls = dff0s.filter_by(trial_flicker=True)
     sf_rmax_set = [(dt.trial_sf, dt.value['r_max']) for dt in dts]

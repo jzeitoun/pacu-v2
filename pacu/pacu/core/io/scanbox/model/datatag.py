@@ -68,6 +68,7 @@ class DTTrialDff0(Datatag, SQLite3Base): # kind of private
     __tablename__ = 'dttrialdff0s'
     category = 'trial'
     method = 'dff0'
+    ignore = Column(Boolean, default=False)
     value = Column(PickleType, default=[])
 class DTOrientationsMean(Datatag, SQLite3Base):
     __tablename__ = 'dtorientationsmeans'
