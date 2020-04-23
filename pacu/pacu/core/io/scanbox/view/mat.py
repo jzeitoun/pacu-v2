@@ -94,7 +94,7 @@ class ScanboxMatView(ZeroDimensionArrayView):
     def get_max_idx(self, size):
         return int(size/self.recordsPerBuffer/self.sz[1]*self.factor/4 - 1)
     def get_shape(self, size):
-        return self.get_max_idx(size) + 1, self.recordsPerBuffer, self.sz[1]
+        return self.get_max_idx(size) + 1, self.sz[0], self.sz[1]
     @property
     def recordsPerBuffer(self):
         rpb = self._dict.get('recordsPerBuffer')

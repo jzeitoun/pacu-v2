@@ -88,7 +88,7 @@ def get_ios(req):
         try:
             data = ScanboxIO(path.relative_to(workspace.path)).toDict()
         except Exception as e:
-            print path, e
+            print 'Path error', path, e
         else:
             dataset.append(data)
     return dataset

@@ -42,6 +42,10 @@ def handle_multi(workspace, condition, roi, datatag, n_panes):
         baseline_first_frame = 0
         baseline_last_frame = 0
 
+   
+    import ipdb; ipdb.set_trace()
+
+
     print ('\ntrial #{} @{}pane'
            '\nbase -> [{}:{}]'
            '\non   -> [{}:{}]').format(

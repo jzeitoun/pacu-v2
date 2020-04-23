@@ -41,9 +41,7 @@ class ScanboxIO(object):
         self.mat_path = self.path.joinpath('meta').with_suffix('.mat')
         self.sbx_path = opt.scanbox_root.joinpath(path).with_suffix('.sbx')
         self.cur_pane = cur_pane
-        self.confirm_mat() # JZ confirm mat file is copied to io directory
         self.blank_frames = []
-        self.confirm_ignore() # JZ confirms database has ignore columns
     @property
     def mat(self):
         return ScanboxMatView(self.mat_path)
@@ -96,16 +94,23 @@ class ScanboxIO(object):
         print(self.blank_frames) # Debug
         print 'Initialize local database...'
         self.initialize_db(condition_id)
-        self.drop_trials()
+        if condition_id:
+            self.drop_trials()
         print 'Done!'
         return self.toDict()
     def drop_trials(self):
+        framerate = self.mat.framerate
+        on_frames = framerate * self.condition.on_duration
+        off_frames = framerate * self.condition.off_duration
         for i, trial in enumerate(self.condition.trials):
-            framerate = self.mat.framerate
-            start_frame = framerate * trial.attributes['on_time']
-            end_frame = framerate * trial.attributes['off_time'] + framerate * self.condition.off_duration
-            if any([start_frame < idx < end_frame for idx in self.blank_frames]) or i == 0:
-                trial.ignore = True
+            on_start = framerate * trial.on_time - 1 # In case frame is partially blank
+            on_end = on_start + on_frames + 1 # In case a frame is partially blank
+            if any([on_start < idx < on_end for idx in self.blank_frames]) or i == 0:
+                trial.ignore = True # Blank frames in on period: ignore trial
+            off_start = framerate * trial.off_time - 1
+            off_end = off_start + off_frames + 1
+            if any([off_start < idx < off_end for idx in self.blank_frames]) :
+                self.condition.trials[i+1].ignore = True # Blank frames in off period: ignore next trial
         self.db_session.flush() # Commit changes
     @memoized_property
     def sessionmaker(self):
@@ -143,6 +148,7 @@ class ScanboxIO(object):
 
     @memoized_property
     def condition(self):
+        self.confirm_ignore()
         # Session = schema.get_sessionmaker(self.db_path, echo=False)
         condition = self.db_session.query(schema.Condition).one()
         condition.expdb = glab.query(ExperimentV1).get(condition.exp_id or '')

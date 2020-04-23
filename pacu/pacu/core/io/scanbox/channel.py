@@ -112,6 +112,7 @@ class ScanboxChannel(object):
     def _import_with_io3(self, io):
         shape = io.mat.get_shape(io.sbx.path.size)
         depth, height, width = map(int, shape)
+        print'shape: {}, {}. {}'.format(depth, height, width)
         flat_data = np.memmap(io.sbx_path.str, dtype='uint16', mode='r')
         globe.source = flat_data[self.channel::io.mat.nchannels].reshape(shape)
         globe.sink = np.memmap(self.mmappath.str, dtype='uint16', mode='w+', shape=shape)
