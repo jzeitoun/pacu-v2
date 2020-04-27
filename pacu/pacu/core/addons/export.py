@@ -211,7 +211,7 @@ class Export(object):
                                         end_color='FFFFFF00',
                                         fill_type='solid')
 
-        # Create new worksheet for each temporal frequency and contrast
+        # Create new worksheet for each temporal frequency
         for contrast in contrasts:
             for tfreq in tfreqs:
                 if self.debug:
@@ -255,9 +255,9 @@ class Export(object):
                 for idx,roi in zip(idx_list, filtered_rois):
                     if self.debug:
                         print(idx)
-                    peak_sf = round(roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast, contrast=contrast).first.attributes['value']['peak'],2)
+                    peak_sf = round(roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['peak'],2)
                     try:
-                        if roi.dtanovaeachs.filter_by(trial_tf=tfreq, contrast=contrast, contrast=contrast).filter_by(trial_sf=peak_sf).first.p <= p_value:
+                        if roi.dtanovaeachs.filter_by(trial_tf=tfreq, trial_contrast=contrast).filter_by(trial_sf=peak_sf).first.p <= p_value:
                             style = sig_cell
                         else:
                             style = reg_cell
@@ -269,85 +269,81 @@ class Export(object):
                             ws.merge_cells('{}{}:{}{}'.format(top.column, top.row, bottom.column, bottom.row))
 
                         ws.cell(row=idx,column=1).value = int(roi.id)
+                        ws.cell(row=idx,column=1).style = style
+                        ws.cell(row=idx,column=2).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['f']
+                        ws.cell(row=idx,column=2).style = style
+                        ws.cell(row=idx,column=3).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['p']
+                        ws.cell(row=idx,column=3).style = style
+                        try:
+                            ws.cell(row=idx,column=4).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['rc33'].x
+                            ws.cell(row=idx,column=5).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['rc33'].y
+                        except AttributeError:
+                            #print 'No "SF Cutoff Rel33" found for cell ',roi.params.cell_id
+                            ws.cell(row=idx,column=4).value = None
+                            ws.cell(row=idx,column=5).value = None
+                        ws.cell(row=idx,column=4).style = style
+                        ws.cell(row=idx,column=5).style = style
+                        ws.cell(row=idx,column=6).value = peak_sf
+                        ws.cell(row=idx,column=6).style = style
+                        ws.cell(row=idx,column=7).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['pref']
+                        ws.cell(row=idx,column=7).style = style
+                        ws.cell(row=idx,column=8).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['ratio']
+                        ws.cell(row=idx,column=8).style = style
+                        ws.cell(row=idx,column=9).value = roi.dtorientationbestprefs.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']
+                        ws.cell(row=idx,column=9).style = style
 
-                            ws.cell(row=idx,column=1).value = int(roi.id)
+                    elif unmerge == 1:
+                        for i in range(num_sf):
+                            ws.cell(row=idx+i,column=1).value = int(roi.id)
+                            ws.cell(row=idx+i,column=1).style = style
+                            ws.cell(row=idx+i,column=2).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['f']
+                            ws.cell(row=idx+i,column=2).style = style
+                            ws.cell(row=idx+i,column=3).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['p']
+                            ws.cell(row=idx+i,column=3).style = style
+                            try:
+                                ws.cell(row=idx+i,column=4).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['rc33'].x
+                                ws.cell(row=idx+i,column=5).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['rc33'].y
+                            except AttributeError:
+                                #print 'No "SF Cutoff Rel33" found for cell ',roi.params.cell_id
+                                ws.cell(row=idx+i,column=4).value = None
+                                ws.cell(row=idx+i,column=5).value = None
+                            ws.cell(row=idx+i,column=4).style = style
+                            ws.cell(row=idx+i,column=5).style = style
+                            ws.cell(row=idx+i,column=6).value = peak_sf
+                            ws.cell(row=idx+i,column=6).style = style
+                            ws.cell(row=idx+i,column=7).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['pref']
+                            ws.cell(row=idx+i,column=7).style = style
+                            ws.cell(row=idx+i,column=8).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']['ratio']
+                            ws.cell(row=idx+i,column=8).style = style
+                            ws.cell(row=idx+i,column=9).value = roi.dtorientationbestprefs.filter_by(trial_tf=tfreq, trial_contrast=contrast).first.attributes['value']
+                            ws.cell(row=idx+i,column=9).style = style
 
-                                ws.cell(row=idx,column=1).value = int(roi.id)
-                                ws.cell(row=idx,column=1).style = style
-                                ws.cell(row=idx,column=2).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['f']
-                                ws.cell(row=idx,column=2).style = style
-                                ws.cell(row=idx,column=3).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['p']
-                                ws.cell(row=idx,column=3).style = style
-                                try:
-                                    ws.cell(row=idx,column=4).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['rc33'].x
-                                    ws.cell(row=idx,column=5).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['rc33'].y
-                                except AttributeError:
-                                    #print 'No "SF Cutoff Rel33" found for cell ',roi.params.cell_id
-                                    ws.cell(row=idx,column=4).value = None
-                                    ws.cell(row=idx,column=5).value = None
-                                ws.cell(row=idx,column=4).style = style
-                                ws.cell(row=idx,column=5).style = style
-                                ws.cell(row=idx,column=6).value = peak_sf
-                                ws.cell(row=idx,column=6).style = style
-                                ws.cell(row=idx,column=7).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast, contrast=contrast).first.attributes['value']['pref']
-                                ws.cell(row=idx,column=7).style = style
-                                ws.cell(row=idx,column=8).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast, contrast=contrast).first.attributes['value']['ratio']
-                                ws.cell(row=idx,column=8).style = style
-                                ws.cell(row=idx,column=9).value = roi.dtorientationbestprefs.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']
-                                ws.cell(row=idx,column=9).style = style
+                    for i,cell in enumerate(ws.iter_rows(min_col=10, max_col=10, min_row=idx, max_row=idx+num_sf-1)):
+                            cell[0].value = sfreqs[i]
+                            cell[0].style = style
 
-                            elif unmerge == 1:
-                                for i in range(num_sf):
-                                    ws.cell(row=idx+i,column=1).value = int(roi.id)
-                                    ws.cell(row=idx+i,column=1).style = style
-                                    ws.cell(row=idx+i,column=2).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['f']
-                                    ws.cell(row=idx+i,column=2).style = style
-                                    ws.cell(row=idx+i,column=3).value = roi.dtanovaalls.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['p']
-                                    ws.cell(row=idx+i,column=3).style = style
-                                    try:
-                                        ws.cell(row=idx+i,column=4).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['rc33'].x
-                                        ws.cell(row=idx+i,column=5).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['rc33'].y
-                                    except AttributeError:
-                                        #print 'No "SF Cutoff Rel33" found for cell ',roi.params.cell_id
-                                        ws.cell(row=idx+i,column=4).value = None
-                                        ws.cell(row=idx+i,column=5).value = None
-                                    ws.cell(row=idx+i,column=4).style = style
-                                    ws.cell(row=idx+i,column=5).style = style
-                                    ws.cell(row=idx+i,column=6).value = peak_sf
-                                    ws.cell(row=idx+i,column=6).style = style
-                                    ws.cell(row=idx+i,column=7).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['pref']
-                                    ws.cell(row=idx+i,column=7).style = style
-                                    ws.cell(row=idx+i,column=8).value = roi.dtsfreqfits.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']['ratio']
-                                    ws.cell(row=idx+i,column=8).style = style
-                                    ws.cell(row=idx+i,column=9).value = roi.dtorientationbestprefs.filter_by(trial_tf=tfreq, contrast=contrast).first.attributes['value']
-                                    ws.cell(row=idx+i,column=9).style = style
+                    for i,row in enumerate(ws.iter_rows(min_col=11, max_col=20, min_row=idx, max_row=idx+num_sf-1)):
 
-                            for i,cell in enumerate(ws.iter_rows(min_col=10, max_col=10, min_row=idx, max_row=idx+num_sf-1)):
-                                    cell[0].value = sfreqs[i]
-                                    cell[0].style = style
-
-                            for i,row in enumerate(ws.iter_rows(min_col=11, max_col=20, min_row=idx, max_row=idx+num_sf-1)):
-
-                                row[0].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['osi']
-                                row[0].style = style
-                                row[1].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['cv']
-                                row[1].style = style
-                                row[2].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['dcv']
-                                row[2].style = style
-                                row[3].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['dsi']
-                                row[3].style = style
-                                row[4].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['sigma']
-                                row[4].style = style
-                                row[5].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['o_pref']
-                                row[5].style = style
-                                row[6].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['r_max']
-                                row[6].style = style
-                                row[7].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['value']['residual']
-                                row[7].style = style
-                                row[8].value = roi.dtanovaeachs.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['f']
-                                row[8].style = style
-                                row[9].value = roi.dtanovaeachs.filter_by(trial_tf=tfreq, contrast=contrast)[i].attributes['p']
-                                row[9].style = style
+                        row[0].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['osi']
+                        row[0].style = style
+                        row[1].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['cv']
+                        row[1].style = style
+                        row[2].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['dcv']
+                        row[2].style = style
+                        row[3].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['dsi']
+                        row[3].style = style
+                        row[4].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['sigma']
+                        row[4].style = style
+                        row[5].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['o_pref']
+                        row[5].style = style
+                        row[6].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['r_max']
+                        row[6].style = style
+                        row[7].value = roi.dtorientationsfits.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['value']['residual']
+                        row[7].style = style
+                        row[8].value = roi.dtanovaeachs.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['f']
+                        row[8].style = style
+                        row[9].value = roi.dtanovaeachs.filter_by(trial_tf=tfreq, trial_contrast=contrast)[i].attributes['p']
+                        row[9].style = style
 
         if len(tfreqs) > 1:
             for sfreq in sfreqs:
@@ -384,6 +380,10 @@ class Export(object):
                     try:
                         ws.cell(row=idx,column=2).value = tf_result['rc_33'].x
                         ws.cell(row=idx,column=3).value = tf_result['rc_33'].y
+                    except:
+                        #print 'No "SF Cutoff Rel33" found for cell ',roi.params.cell_id
+                        ws.cell(row=idx,column=2).value = None
+                        ws.cell(row=idx,column=3).value = None
                     ws.cell(row=idx,column=2).style = style
                     ws.cell(row=idx,column=3).style = style
                     ws.cell(row=idx,column=4).value = tf_result['peak']
