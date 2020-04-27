@@ -11,6 +11,7 @@ env/
 build/
 develop-eggs/
 dist/
+vendor/
 downloads/
 eggs/
 lib/
@@ -57,3 +58,6 @@ target/
 doc/_build/
 doc/_static/
 doc/_templates/
+
+# Mac
+.DS_Store

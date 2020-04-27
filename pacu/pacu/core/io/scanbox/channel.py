@@ -11,8 +11,7 @@ from pacu.util.inspect import repr
 from pacu.util.path import Path
 from pacu.util.prop.memoized import memoized_property
 from matplotlib.colors import Normalize
-from matplotlib.cm import ScalarMappable, jet, gray, viridis, plasma, inferno, magma, bone, pink, spring, summer, autumn, winter, cool, Wistia, hot, PRGn, PuOr, RdGy, Spectral, coolwarm
-autumn, winter, cool, Wistia, hot, PRGn, PuOr, RdGy, Spectral, coolwarm
+from matplotlib.cm import ScalarMappable, jet, gray
 from pacu.core.io.util.colormap.distorted2 import DistortedColormap2
 
 from pacu.core.addons import globe # Used to hold global variables for multiprocessing
@@ -21,24 +20,6 @@ from pacu.core.addons import multiprocessing # Using monkey-patched library for 
 colormaps = {
     'Gray': gray,
     'Jet': jet,
-    'Viridis': viridis,
-    'Plasma': plasma,
-    'Inferno': inferno,
-    'Magma': magma,
-    'Bone': bone,
-    'Pink': pink,
-    'Spring': spring,
-    'Summer': summer,
-    'Autumn': autumn,
-    'Winter': winter,
-    'Cool': cool,
-    'Wistia': Wistia,
-    'Hot': hot,
-    'Purple-Green': PRGn,
-    'Purple-Orange': PuOr,
-    'Red-Gray': RdGy,
-    'Spectral': Spectral,
-    'Cool-Warm': coolwarm
     }
 
 def converter(index_set):
