@@ -43,7 +43,7 @@
     "emberfire": "^2.0.8",
     "jszip": "^3.1.5",
     "loader.js": "^4.2.3",
-    "semantic-ui": "^2.3.1",
+    "semantic-ui": "^2.5.0",
     "semantic-ui-ember": "^2.0.1",
     "toastr": "^2.1.2"
   },
